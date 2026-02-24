@@ -1,0 +1,14 @@
+body {
+    background-color: salmon;
+    font-family: sans-serif;
+
+    // Test Nesting
+    .section-container {
+        max-width: 1200px;
+        margin: 0 auto;
+
+        h1 {
+            color: #fff; // Should turn blue instantly on save
+        }
+    }
+}

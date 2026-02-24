@@ -1,0 +1,96 @@
+div[class|="postbox"]:not(:has(#side-sortables))
+  .inside:has(.fields-container) {
+  margin-top: 0 !important;
+  padding: 0 !important;
+}
+
+.taw-tabbed {
+  .tabs {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgb(195, 196, 199);
+
+    * {
+      transition: all 150ms ease;
+    }
+
+    .tab-title {
+      padding: 0.75rem 1rem;
+      border-right: 1px solid rgb(195, 196, 199);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      p,
+      img {
+        opacity: 0.25;
+        margin: 0;
+      }
+
+      img {
+        width: 1rem;
+      }
+
+      &:hover {
+        cursor: pointer;
+      }
+
+      /* &:not(.active) {
+        border-right: none;
+      } */
+
+      &.active,
+      &:hover {
+        background-color: #f3f3f3;
+
+        p,
+        img {
+          opacity: 1;
+        }
+
+        &:not(:first-child) {
+          /* border-left: 1px solid rgb(195, 196, 199); */
+        }
+      }
+    }
+  }
+
+  .tab-content--wrapper {
+    --gap: 1rem;
+  }
+}
+.fields-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.fields-container .field {
+  padding: 1rem;
+  width: var(--width, 100%);
+  box-sizing: border-box;
+  box-shadow: 0 0 0 0.5px rgb(195, 196, 199);
+  border-bottom: 0.5px solid rgb(195, 196, 199);
+  display: flex;
+  flex-direction: column;
+}
+
+.fields-container .field .field-and-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.fields-container .field .field-and-label label {
+  font-weight: 600;
+}
+
+.fields-container .field .field-and-label input:not(.ed_button) {
+  width: 100%;
+}
+
+.fields-container .field .description {
+  /* margin: auto 0 0 0; */
+  opacity: 0.75;
+}
