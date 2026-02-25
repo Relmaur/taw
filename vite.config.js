@@ -1,8 +1,15 @@
 import { defineConfig } from 'vite';
 import fullReload from 'vite-plugin-full-reload';
+import tailwindcss from '@tailwindcss/vite';
+import { readdirSync } from 'fs';
+
+const componentAssets = readdirSync('inc/Components', { recursive: true })
+    .filter(f => f.endsWith('style.css') || f.endsWith('script.js'))
+    .map(f => `inc/Components/${f}`);
 
 export default defineConfig({
     plugins: [
+        tailwindcss(),
         fullReload(['**/*.php', 'resources/views/**/*.twig']),
     ],
     build: {
@@ -11,8 +18,10 @@ export default defineConfig({
         manifest: 'manifest.json', // Output manifest to build root, not .vite/
         rollupOptions: {
             input: [
+                'resources/css/app.css',
                 'resources/scss/app.scss',
-                'resources/js/app.js'
+                'resources/js/app.js',
+                ...componentAssets,
             ],
         },
     },

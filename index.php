@@ -1,9 +1,13 @@
-<?php get_header() ?>
+<?php get_header(); ?>
 
-<section>
+<!-- <section>
     <div class="section-container">
         <h1>Hello, World!</h1>
     </div>
-</section>
+</section> -->
 
-<?php get_footer() ?>
+<?php  // Section — fetches its own data
+TAW\Components\ComponentRegistry::render('hero');
+?>
+
+<?php get_footer(); ?>

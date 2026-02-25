@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+/* Scan all theme PHP files for Tailwind class names */
+@source "../../**/*.php";

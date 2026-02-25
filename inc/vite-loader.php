@@ -23,6 +23,9 @@ function vite_enqueue_theme_assets()
         // DEV MODE - Vite client must load first for HMR
         wp_enqueue_script('vite-client', VITE_SERVER . '/@vite/client', [], null, false);
 
+        // Tailwind CSS entry (HMR handled by @tailwindcss/vite)
+        wp_enqueue_style('tailwind', VITE_SERVER . '/resources/css/app.css', [], null);
+
         // Load JS entry point (which imports SCSS, so HMR works for styles too)
         wp_enqueue_script('theme-app', VITE_SERVER . '/' . VITE_ENTRY_POINT, ['vite-client'], null, false);
 
@@ -44,7 +47,13 @@ function vite_enqueue_theme_assets()
             }
         }
 
-        // 3. Standalone CSS (if you kept scss separate in config input)
+        // 3. Tailwind CSS entry
+        if (isset($manifest['resources/css/app.css'])) {
+            $css_file = $manifest['resources/css/app.css']['file'];
+            wp_enqueue_style('tailwind', get_theme_file_uri('/public/build/' . $css_file), [], null);
+        }
+
+        // 4. Standalone SCSS (custom theme styles)
         if (isset($manifest['resources/scss/app.scss'])) {
             $css_file = $manifest['resources/scss/app.scss']['file'];
             wp_enqueue_style('theme-main-css', get_theme_file_uri('/public/build/' . $css_file), [], null);
@@ -53,8 +62,8 @@ function vite_enqueue_theme_assets()
 }
 
 // Add type="module" for Vite
-add_filter('script_loader_tag', function ($tag, $handle, $src) {
-    if (in_array($handle, ['vite-client', 'theme-app'])) {
+add_filter('script_loader_tag', function ($tag, $_handle, $src) {
+    if (str_starts_with($src, VITE_SERVER)) {
         return '<script type="module" src="' . esc_url($src) . '"></script>';
     }
     return $tag;
