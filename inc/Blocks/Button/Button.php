@@ -1,11 +1,11 @@
 <?php
-// inc/Components/Button/Button.php
+// inc/Blocks/Button/Button.php
 
-namespace TAW\Components\Button;
+namespace TAW\Blocks\Button;
 
-use TAW\Components\UIComponent;
+use TAW\Blocks\Block;
 
-class Button extends UIComponent
+class Button extends Block
 {
     protected string $id = 'button';
 

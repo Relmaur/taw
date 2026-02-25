@@ -1,5 +1,5 @@
 <?php
-// inc/Components/Button/index.php
+// inc/Blocks/Button/index.php
 
 /**
  * @var string $text

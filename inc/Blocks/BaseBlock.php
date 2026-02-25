@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace TAW\Components;
+namespace TAW\Blocks;
 
-abstract class BaseComponent
+abstract class BaseBlock
 {
 
     /**
@@ -28,7 +28,7 @@ abstract class BaseComponent
     {
 
         // Use reflection to find the CHILD class's file location
-        // This is the key trick - it lets BaseComponent find Hero/Hero.php's directory
+        // This is the key trick - it lets BaseBlock find Hero/Hero.php's directory
         $reflector = new \ReflectionClass(static::class);
         $this->dir = dirname($reflector->getFileName());
 

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace TAW\Components\Hero;
+namespace TAW\Blocks\Hero;
 
-use TAW\Components\SectionComponent;
+use TAW\Blocks\MetaBlock;
 use TAW\Metabox\Metabox;
 
-class Hero extends SectionComponent
+class Hero extends MetaBlock
 {
     protected string $id = 'hero';
 

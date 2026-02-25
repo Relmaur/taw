@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace TAW\Components;
+namespace TAW\Blocks;
 
 use TAW\Metabox\Metabox;
 
-abstract class SectionComponent extends BaseComponent
+abstract class MetaBlock extends BaseBlock
 {
     public function __construct()
     {
@@ -15,7 +15,7 @@ abstract class SectionComponent extends BaseComponent
     }
 
     /**
-     * Define and register metaboxes for this section.
+     * Define and register metaboxes for this block.
      */
     abstract protected function registerMetaboxes(): void;
 
@@ -25,7 +25,7 @@ abstract class SectionComponent extends BaseComponent
     abstract protected function getData(int $postId): array;
 
     /**
-     * Render this section for a given post
+     * Render this block for a given post
      */
     public function render(?int $postId = null): void
     {

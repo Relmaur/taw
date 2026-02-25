@@ -1,21 +1,21 @@
 <?php
-// inc/Components/ComponentRegistry.php
+// inc/Blocks/BlockRegistry.php
 
-namespace TAW\Components;
+namespace TAW\Blocks;
 
-use TAW\Components\BaseComponent;
+use TAW\Blocks\BaseBlock;
 
-class ComponentRegistry
+class BlockRegistry
 {
-    /** @var array<string, BaseComponent> */
+    /** @var array<string, BaseBlock> */
     private static array $components = [];
 
-    public static function register(BaseComponent $component): void
+    public static function register(BaseBlock $component): void
     {
         self::$components[$component->getId()] = $component;
     }
 
-    public static function get(string $id): ?BaseComponent
+    public static function get(string $id): ?BaseBlock
     {
         return self::$components[$id] ?? null;
     }

@@ -3,9 +3,9 @@ import fullReload from 'vite-plugin-full-reload';
 import tailwindcss from '@tailwindcss/vite';
 import { readdirSync } from 'fs';
 
-const componentAssets = readdirSync('inc/Components', { recursive: true })
+const componentAssets = readdirSync('inc/Blocks', { recursive: true })
     .filter(f => f.endsWith('style.css') || f.endsWith('script.js'))
-    .map(f => `inc/Components/${f}`);
+    .map(f => `inc/Blocks/${f}`);
 
 export default defineConfig({
     plugins: [

@@ -13,7 +13,7 @@ add_action('admin_init', function () {
     remove_post_type_support('page', 'editor');
 });
 
-use TAW\Components\ComponentRegistry;
-use TAW\Components\Hero\Hero;
+use TAW\Blocks\BlockRegistry;
+use TAW\Blocks\Hero\Hero;
 
-ComponentRegistry::register(new Hero());
+BlockRegistry::register(new Hero());
