@@ -62,8 +62,13 @@ function vite_enqueue_theme_assets()
 }
 
 // Add type="module" for Vite
-add_filter('script_loader_tag', function ($tag, $_handle, $src) {
+add_filter('script_loader_tag', function ($tag, $handle, $src) {
+    // Dev: all Vite server scripts
     if (str_starts_with($src, VITE_SERVER)) {
+        return '<script type="module" src="' . esc_url($src) . '"></script>';
+    }
+    // Prod: theme-app and any component scripts
+    if ($handle === 'theme-app' || str_starts_with($handle, 'taw-component-')) {
         return '<script type="module" src="' . esc_url($src) . '"></script>';
     }
     return $tag;

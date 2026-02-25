@@ -3,19 +3,19 @@
 
 namespace TAW\Blocks;
 
-use TAW\Blocks\BaseBlock;
+use TAW\Blocks\MetaBlock;
 
 class BlockRegistry
 {
-    /** @var array<string, BaseBlock> */
+    /** @var array<string, MetaBlock> */
     private static array $components = [];
 
-    public static function register(BaseBlock $component): void
+    public static function register(MetaBlock $metablock): void
     {
-        self::$components[$component->getId()] = $component;
+        self::$components[$metablock->getId()] = $metablock;
     }
 
-    public static function get(string $id): ?BaseBlock
+    public static function get(string $id): ?MetaBlock
     {
         return self::$components[$id] ?? null;
     }
@@ -25,9 +25,9 @@ class BlockRegistry
      */
     public static function render(string $id, ?int $postId = null): void
     {
-        $component = self::get($id);
-        if ($component) {
-            $component->render($postId);
+        $metablock = self::get($id);
+        if ($metablock) {
+            $metablock->render($postId);
         }
     }
 }

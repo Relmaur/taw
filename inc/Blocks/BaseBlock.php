@@ -37,9 +37,9 @@ abstract class BaseBlock
             . str_replace(get_template_directory() . '/', '', $this->dir);
 
         // Enqueue assets early enough for wp_head() to pick them up
-        add_action('wp_enqueue_scripts', function () {
-            $this->enqueueAssets();
-        });
+        // add_action('wp_enqueue_scripts', function () {
+        //     $this->enqueueAssets();
+        // });
 
         // Register the metaboxes this component needs
         // $this->registerMetaboxes();
@@ -67,28 +67,30 @@ abstract class BaseBlock
 
         $relative_dir = str_replace(get_template_directory() . '/', '', $this->dir);
 
+        // Determine if we've already passed wp_head — if so, we need to print styles inline
+        $did_head = did_action('wp_head');
+
         if (function_exists('vite_is_dev') && vite_is_dev()) {
-            // DEV: serve from Vite server so HMR works
-            if (file_exists($this->dir . '/style.css')) {
-                wp_enqueue_style(
-                    'taw-component-' . $this->id,
-                    VITE_SERVER . '/' . $relative_dir . '/style.css',
-                    [],
-                    null
-                );
+            $css_src = file_exists($this->dir . '/style.css')
+                ? VITE_SERVER . '/' . $relative_dir . '/style.css'
+                : null;
+            $js_src = file_exists($this->dir . '/script.js')
+                ? VITE_SERVER . '/' . $relative_dir . '/script.js'
+                : null;
+
+            if ($css_src) {
+                if ($did_head) {
+                    // Print directly since wp_head already fired
+                    echo '<link rel="stylesheet" href="' . esc_url($css_src) . '">' . "\n";
+                } else {
+                    wp_enqueue_style('taw-block-' . $this->id, $css_src, [], null);
+                }
             }
 
-            if (file_exists($this->dir . '/script.js')) {
-                wp_enqueue_script(
-                    'taw-component-' . $this->id,
-                    VITE_SERVER . '/' . $relative_dir . '/script.js',
-                    ['vite-client'],
-                    null,
-                    true
-                );
+            if ($js_src) {
+                wp_enqueue_script('taw-block-' . $this->id, $js_src, ['vite-client'], null, true);
             }
         } else {
-            // PRODUCTION: resolve paths through the manifest
             static $manifest = null;
             if ($manifest === null) {
                 $manifest_path = get_template_directory() . '/public/build/manifest.json';
@@ -101,17 +103,17 @@ abstract class BaseBlock
             $js_key  = $relative_dir . '/script.js';
 
             if (isset($manifest[$css_key])) {
-                wp_enqueue_style(
-                    'taw-component-' . $this->id,
-                    get_theme_file_uri('/public/build/' . $manifest[$css_key]['file']),
-                    [],
-                    null
-                );
+                $css_url = get_theme_file_uri('/public/build/' . $manifest[$css_key]['file']);
+                if ($did_head) {
+                    echo '<link rel="stylesheet" href="' . esc_url($css_url) . '">' . "\n";
+                } else {
+                    wp_enqueue_style('taw-block-' . $this->id, $css_url, [], null);
+                }
             }
 
             if (isset($manifest[$js_key])) {
                 wp_enqueue_script(
-                    'taw-component-' . $this->id,
+                    'taw-block-' . $this->id,
                     get_theme_file_uri('/public/build/' . $manifest[$js_key]['file']),
                     [],
                     null,
@@ -126,6 +128,9 @@ abstract class BaseBlock
      */
     protected function renderTemplate(array $data): void
     {
+
+        $this->enqueueAssets();
+
         $template = $this->dir . '/index.php';
 
         if (file_exists($template)) {
