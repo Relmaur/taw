@@ -4,7 +4,10 @@
 use TAW\Blocks\BlockRegistry;
 
 // 1. Declare which blocks this page needs (BEFORE get_header)
-BlockRegistry::queue('');
+BlockRegistry::queue('hero');
+
+// Example
+// BlockRegistry::queue('hero', 'stats', 'testimonials', 'cta');
 
 // 2. get_header triggers wp_enqueue_scripts → wp_head → styles in <head>
 get_header();

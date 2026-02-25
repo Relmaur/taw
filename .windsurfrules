@@ -1,0 +1,13 @@
+You are working on TAW Theme — a classic WordPress theme with a custom block architecture.
+
+Full architecture docs: see AGENTS.md in the repo root.
+
+Key rules:
+- Blocks live in inc/Blocks/{Name}/{Name}.php — folder MUST match class name
+- MetaBlock = data-owning (metaboxes + post_meta), Block = presentational (props)
+- Auto-discovery via BlockLoader::loadAll() — never register manually in functions.php
+- Template pattern: BlockRegistry::queue() before get_header(), render() in body
+- PSR-4: TAW\ maps to inc/
+- Stack: WordPress, Tailwind v4, Alpine.js v3, Vite v7, SCSS, bespoke Metabox framework
+- Always escape output: esc_html(), esc_url(), esc_attr()
+- Meta key pattern: _taw_{field_id}

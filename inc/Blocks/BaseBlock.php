@@ -53,16 +53,18 @@ abstract class BaseBlock
      */
     private function enqueueDevAssets(string $relative_dir): void
     {
-        // SCSS takes priority over CSS
         $style_ext = $this->resolveStyleExtension();
+        $head_done = did_action('wp_head') > 0;
 
         if ($style_ext) {
-            wp_enqueue_style(
-                'taw-block-' . $this->id,
-                VITE_SERVER . '/' . $relative_dir . '/' . $style_ext,
-                [],
-                null
-            );
+            $url = VITE_SERVER . '/' . $relative_dir . '/' . $style_ext;
+
+            if ($head_done) {
+                // Fallback: wp_head already fired, print inline
+                printf('<link rel="stylesheet" href="%s">' . "\n", esc_url($url));
+            } else {
+                wp_enqueue_style('taw-block-' . $this->id, $url, [], null);
+            }
         }
 
         if (file_exists($this->dir . '/script.js')) {
@@ -71,7 +73,7 @@ abstract class BaseBlock
                 VITE_SERVER . '/' . $relative_dir . '/script.js',
                 ['vite-client'],
                 null,
-                true
+                true  // footer — scripts DO have a footer fallback
             );
         }
     }
@@ -89,19 +91,21 @@ abstract class BaseBlock
                 : [];
         }
 
-        // Check manifest for scss first, then css
         $scss_key  = $relative_dir . '/style.scss';
         $css_key   = $relative_dir . '/style.css';
         $js_key    = $relative_dir . '/script.js';
         $style_key = isset($manifest[$scss_key]) ? $scss_key : (isset($manifest[$css_key]) ? $css_key : null);
 
+        $head_done = did_action('wp_head') > 0;
+
         if ($style_key) {
-            wp_enqueue_style(
-                'taw-block-' . $this->id,
-                get_theme_file_uri('/public/build/' . $manifest[$style_key]['file']),
-                [],
-                null
-            );
+            $url = get_theme_file_uri('/public/build/' . $manifest[$style_key]['file']);
+
+            if ($head_done) {
+                printf('<link rel="stylesheet" href="%s">' . "\n", esc_url($url));
+            } else {
+                wp_enqueue_style('taw-block-' . $this->id, $url, [], null);
+            }
         }
 
         if (isset($manifest[$js_key])) {
