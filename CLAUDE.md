@@ -17,9 +17,11 @@ composer dump-autoload  # Rebuild classmap after new classes
 
 ## Core Architecture
 
-Blocks live in `inc/Blocks/{Name}/{Name}.php` with matching namespace `TAW\Blocks\{Name}\{Name}`.
+Framework internals live in `inc/Core/` (namespace `TAW\Core`): `BaseBlock`, `Block`, `MetaBlock`, `BlockLoader`, `BlockRegistry`, `Metabox`.
 
-Two types:
+Dev blocks live in `inc/Blocks/{Name}/{Name}.php` with namespace `TAW\Blocks\{Name}\{Name}`.
+
+Two block types:
 - **MetaBlock** — owns metaboxes, fetches post_meta, rendered via `BlockRegistry::render('id')`
 - **Block** — presentational, receives props, rendered directly: `(new Button())->render([...])`
 
@@ -33,11 +35,11 @@ Asset loading: `BlockRegistry::queue('hero', 'stats')` BEFORE `get_header()` →
 - Meta keys: `_taw_{field_id}`
 - Block assets: `style.css` (or `.scss`) and `script.js` — auto-enqueued
 - Templates: `index.php` receives `extract()`-ed variables from `getData()`
-- PSR-4: `TAW\` → `inc/`
+- PSR-4: `TAW\` → `inc/` (so `TAW\Core\*` → `inc/Core/`, `TAW\Blocks\{Name}\{Name}` → `inc/Blocks/{Name}/{Name}.php`)
 
 ## When Creating New Blocks
 
-1. Create `inc/Blocks/{Name}/{Name}.php` extending `MetaBlock` or `Block`
+1. Create `inc/Blocks/{Name}/{Name}.php` — use `use TAW\Core\MetaBlock;` or `use TAW\Core\Block;`
 2. Create `inc/Blocks/{Name}/index.php` template
 3. Optionally add `style.css`/`style.scss` and `script.js`
 4. That's it — auto-discovered, no `functions.php` changes

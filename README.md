@@ -70,12 +70,14 @@ Compiles and minifies all assets to `public/build/` with hashed filenames and a 
 ```
 taw-theme/
 ├── inc/
-│   ├── Blocks/                    # ← The block system (core architecture)
+│   ├── Core/                      # ← Framework internals (namespace TAW\Core)
 │   │   ├── BaseBlock.php          #    Abstract base — asset loading, template rendering
 │   │   ├── MetaBlock.php          #    Data-owning blocks (metaboxes + post_meta)
 │   │   ├── Block.php              #    Presentational blocks (receives props)
 │   │   ├── BlockRegistry.php      #    Static registry — queue, enqueue, render
-│   │   ├── BlockLoader.php        #    Auto-discovers blocks by scanning directories
+│   │   ├── BlockLoader.php        #    Auto-discovers blocks by scanning inc/Blocks/
+│   │   └── Metabox.php            #    Config-driven metabox framework
+│   ├── Blocks/                    # ← Dev block collection (one folder per block)
 │   │   ├── Hero/                  #    Example MetaBlock
 │   │   │   ├── Hero.php           #      Class (metaboxes + data logic)
 │   │   │   ├── index.php          #      Template (pure markup)
@@ -83,9 +85,6 @@ taw-theme/
 │   │   └── Button/                #    Example UI Block
 │   │       ├── Button.php         #      Class (defaults + props)
 │   │       └── index.php          #      Template
-│   ├── Metabox/                   # ← Bespoke metabox framework
-│   │   ├── Metabox.php            #    Config-driven field registration
-│   │   └── style.css              #    Admin UI styles
 │   └── vite-loader.php            # ← Vite ↔ WordPress bridge
 ├── resources/
 │   ├── css/app.css                # Tailwind v4 entry point
@@ -222,7 +221,7 @@ Block stylesheets and scripts are only loaded on pages that use them. This is ma
 
 ```php
 <?php
-use TAW\Blocks\BlockRegistry;
+use TAW\Core\BlockRegistry;
 
 // 1. Declare which blocks this page needs (BEFORE get_header)
 BlockRegistry::queue('hero', 'stats', 'cta');
@@ -257,8 +256,8 @@ declare(strict_types=1);
 
 namespace TAW\Blocks\Features;
 
-use TAW\Blocks\MetaBlock;
-use TAW\Metabox\Metabox;
+use TAW\Core\MetaBlock;
+use TAW\Core\Metabox;
 
 class Features extends MetaBlock
 {
@@ -336,7 +335,7 @@ declare(strict_types=1);
 
 namespace TAW\Blocks\Badge;
 
-use TAW\Blocks\Block;
+use TAW\Core\Block;
 
 class Badge extends Block
 {
@@ -379,7 +378,7 @@ if (empty($label)) return;
 
 ## The Metabox Framework
 
-The theme includes a bespoke, configuration-driven metabox framework at `inc/Metabox/Metabox.php`. No plugins needed.
+The theme includes a bespoke, configuration-driven metabox framework at `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox`). No plugins needed.
 
 ### Supported field types
 
@@ -479,7 +478,7 @@ Block assets are auto-discovered by `vite.config.js` at build time — adding a 
 |---|---|
 | Autoloading | PSR-4 via Composer (`TAW\` → `inc/`) |
 | Blocks | Custom class hierarchy (`BaseBlock` → `MetaBlock` / `Block`) |
-| Metaboxes | Bespoke framework (`inc/Metabox/Metabox.php`) |
+| Metaboxes | Bespoke framework (`inc/Core/Metabox.php`) |
 | Asset pipeline | `inc/vite-loader.php` + `BlockRegistry` queue system |
 
 ---
@@ -491,7 +490,7 @@ Block assets are auto-discovered by `vite.config.js` at build time — adding a 
 ```php
 <?php
 // front-page.php
-use TAW\Blocks\BlockRegistry;
+use TAW\Core\BlockRegistry;
 
 BlockRegistry::queue('hero', 'features', 'stats', 'testimonials', 'cta');
 get_header();

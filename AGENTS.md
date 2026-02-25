@@ -9,8 +9,8 @@
 
 | Path | Purpose |
 |---|---|
-| `inc/Blocks/` | Block system (the core architecture) |
-| `inc/Metabox/` | Bespoke WordPress metabox framework |
+| `inc/Core/` | Framework internals — base classes, registry, loader, metabox engine |
+| `inc/Blocks/` | Dev block collection — one folder per block, auto-discovered |
 | `inc/vite-loader.php` | Vite ↔ WordPress bridge (dev/prod) |
 | `resources/css/app.css` | Tailwind v4 entry point |
 | `resources/scss/app.scss` | Global SCSS (non-Tailwind styles) |
@@ -35,11 +35,12 @@ BaseBlock (abstract)
 
 | File | Role |
 |---|---|
-| `inc/Blocks/BaseBlock.php` | Reflection-based auto-discovery of component directory, asset enqueuing (CSS/JS), template rendering via `extract()` |
-| `inc/Blocks/MetaBlock.php` | Extends BaseBlock. Registers metaboxes in constructor, provides `getData(int $postId)` and `render(?int $postId)` |
-| `inc/Blocks/Block.php` | Extends BaseBlock. Defines `defaults()` for props, provides `render(array $props)` |
-| `inc/Blocks/BlockRegistry.php` | Static registry for MetaBlocks. Supports `register()`, `queue()`, `render()`, `enqueueQueuedAssets()` |
-| `inc/Blocks/BlockLoader.php` | Auto-discovers all MetaBlock classes by scanning `inc/Blocks/*/` directories |
+| `inc/Core/BaseBlock.php` | Reflection-based auto-discovery of component directory, asset enqueuing (CSS/JS), template rendering via `extract()` |
+| `inc/Core/MetaBlock.php` | Extends BaseBlock. Registers metaboxes in constructor, provides `getData(int $postId)` and `render(?int $postId)` |
+| `inc/Core/Block.php` | Extends BaseBlock. Defines `defaults()` for props, provides `render(array $props)` |
+| `inc/Core/BlockRegistry.php` | Static registry for MetaBlocks. Supports `register()`, `queue()`, `render()`, `enqueueQueuedAssets()` |
+| `inc/Core/BlockLoader.php` | Auto-discovers all MetaBlock classes by scanning `inc/Blocks/*/` directories |
+| `inc/Core/Metabox.php` | Configuration-driven metabox framework. Field registration, rendering, saving, and static retrieval helpers |
 
 ### Naming Convention (CRITICAL)
 
@@ -91,7 +92,7 @@ get_footer()         → wp_footer()
 **Template pattern:**
 ```php
 <?php
-use TAW\Blocks\BlockRegistry;
+use TAW\Core\BlockRegistry;
 
 // 1. Queue blocks BEFORE get_header (assets land in <head>)
 BlockRegistry::queue('hero', 'stats');
@@ -121,8 +122,8 @@ declare(strict_types=1);
 
 namespace TAW\Blocks\Features;
 
-use TAW\Blocks\MetaBlock;
-use TAW\Metabox\Metabox;
+use TAW\Core\MetaBlock;
+use TAW\Core\Metabox;
 
 class Features extends MetaBlock
 {
@@ -190,7 +191,7 @@ declare(strict_types=1);
 
 namespace TAW\Blocks\Card;
 
-use TAW\Blocks\Block;
+use TAW\Core\Block;
 
 class Card extends Block
 {
@@ -219,7 +220,7 @@ Usage in any template:
 
 ## The Metabox Framework
 
-Located in `inc/Metabox/Metabox.php`. Configuration-driven, supports:
+Located in `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox`). Configuration-driven, supports:
 
 **Field types:** `text`, `textarea`, `wysiwyg`, `url`, `number`, `select`, `image`, `group`
 
@@ -296,9 +297,13 @@ Defined in `composer.json`:
 ```
 
 Namespace mapping:
-- `TAW\Blocks\BaseBlock` → `inc/Blocks/BaseBlock.php`
+- `TAW\Core\BaseBlock` → `inc/Core/BaseBlock.php`
+- `TAW\Core\MetaBlock` → `inc/Core/MetaBlock.php`
+- `TAW\Core\Block` → `inc/Core/Block.php`
+- `TAW\Core\BlockRegistry` → `inc/Core/BlockRegistry.php`
+- `TAW\Core\BlockLoader` → `inc/Core/BlockLoader.php`
+- `TAW\Core\Metabox` → `inc/Core/Metabox.php`
 - `TAW\Blocks\Hero\Hero` → `inc/Blocks/Hero/Hero.php`
-- `TAW\Metabox\Metabox` → `inc/Metabox/Metabox.php`
 
 After adding new classes, run `composer dump-autoload` if autoloading fails.
 

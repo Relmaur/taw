@@ -8,7 +8,8 @@ A classic WordPress theme with a custom block system, Vite v7, Tailwind v4, Alpi
 
 ## Key Architecture
 
-- Blocks: `inc/Blocks/{Name}/{Name}.php` — folder name must match class name
+- Framework internals in `inc/Core/` (namespace `TAW\Core`): `BaseBlock`, `Block`, `MetaBlock`, `BlockLoader`, `BlockRegistry`, `Metabox`
+- Dev blocks: `inc/Blocks/{Name}/{Name}.php` — folder name must match class name, namespace `TAW\Blocks\{Name}\{Name}`
 - Two types: **MetaBlock** (data-owning, uses metaboxes) and **Block** (presentational, receives props)
 - Auto-discovery via `BlockLoader::loadAll()` — no manual registration
 - Asset queueing: `BlockRegistry::queue()` before `get_header()`, then `BlockRegistry::render()` in body
@@ -16,7 +17,8 @@ A classic WordPress theme with a custom block system, Vite v7, Tailwind v4, Alpi
 
 ## When generating code
 
-- New blocks: extend `MetaBlock` or `Block`, follow the naming convention exactly
+- New blocks: extend `TAW\Core\MetaBlock` or `TAW\Core\Block`, follow the naming convention exactly
+- Use `use TAW\Core\MetaBlock;`, `use TAW\Core\Block;`, `use TAW\Core\Metabox;`, `use TAW\Core\BlockRegistry;`
 - Templates: use `esc_html()`, `esc_url()`, `esc_attr()` for all output
 - Metabox fields: use types `text`, `textarea`, `wysiwyg`, `url`, `number`, `select`, `image`, `group`
 - Meta keys follow pattern `_taw_{field_id}`
