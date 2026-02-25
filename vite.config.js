@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { readdirSync } from 'fs';
 
 const componentAssets = readdirSync('inc/Blocks', { recursive: true })
-    .filter(f => f.endsWith('style.css') || f.endsWith('script.js'))
+    .filter(f => f.endsWith('style.css') || f.endsWith('style.scss') || f.endsWith('script.js'))
     .map(f => `inc/Blocks/${f}`);
 
 export default defineConfig({
@@ -15,7 +15,7 @@ export default defineConfig({
     build: {
         outDir: 'public/build',
         emptyDirOnBuild: true,
-        manifest: 'manifest.json', // Output manifest to build root, not .vite/
+        manifest: 'manifest.json',
         rollupOptions: {
             input: [
                 'resources/css/app.css',
@@ -31,7 +31,7 @@ export default defineConfig({
         strictPort: true,
         cors: true,
         watch: {
-            usePolling: true, // Better for some environments like Local by Flywheel
+            usePolling: true,
         },
     },
 });

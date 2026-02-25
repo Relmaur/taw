@@ -21,7 +21,7 @@ $button = new Button();
 
 ?>
 
-<section class="hero bg-amber-100">
+<section class="hero bg-amber-100!">
     <div class="section-container flex justify-center items-stretch gap-10 mx-auto max-w-360 w-[90%]">
         <div class=" hero__content flex-1 flex flex-col justify-center">
             <?php if ($tagline): ?>
