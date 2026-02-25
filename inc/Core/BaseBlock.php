@@ -1,9 +1,8 @@
 <?php
-// inc/Blocks/BaseBlock.php
 
 declare(strict_types=1);
 
-namespace TAW\Blocks;
+namespace TAW\Core;
 
 abstract class BaseBlock
 {

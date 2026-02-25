@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace TAW\Blocks;
+namespace TAW\Core;
 
-use TAW\Metabox\Metabox;
+use TAW\Core\Metabox;
 
 abstract class MetaBlock extends BaseBlock
 {

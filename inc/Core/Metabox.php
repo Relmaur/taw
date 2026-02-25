@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TAW;
+namespace TAW\Core;
 
 /**
  * Native WordPress Metabox Framework
@@ -20,8 +20,6 @@ namespace TAW;
  *
  * @package TAW
  */
-
-namespace TAW\Metabox;
 
 if (!defined('ABSPATH')) {
     exit;

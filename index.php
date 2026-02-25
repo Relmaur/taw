@@ -1,7 +1,7 @@
 <?php
 // index.php (or front-page.php)
 
-use TAW\Blocks\BlockRegistry;
+use TAW\Core\BlockRegistry;
 
 // 1. Declare which blocks this page needs (BEFORE get_header)
 BlockRegistry::queue('hero');

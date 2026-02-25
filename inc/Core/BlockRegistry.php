@@ -1,7 +1,10 @@
 <?php
-// inc/Blocks/BlockRegistry.php
 
-namespace TAW\Blocks;
+declare(strict_types=1);
+
+namespace TAW\Core;
+
+use TAW\Core\MetaBlock;
 
 class BlockRegistry
 {
@@ -13,7 +16,7 @@ class BlockRegistry
 
     /**
      * Register a MetaBlock instance (called by BlockLoader).
-     * 
+     *
      * @param MetaBlock $block a Metablock instance
      */
     public static function register(MetaBlock $block): void
@@ -23,7 +26,7 @@ class BlockRegistry
 
     /**
      * Get a specific block by id
-     * 
+     *
      * @param string $id The id of the block to retrieve
      */
     public static function get(string $id): ?MetaBlock
@@ -34,7 +37,7 @@ class BlockRegistry
     /**
      * Queue one or more blocks for the current page.
      * Call BEFORE get_header() so assets land in <head>.
-     * 
+     *
      * @param string $ids The ids of the blocks on the page that need their assets enqueued on <head> (to prevent FAUC)
      */
     public static function queue(string ...$ids): void
@@ -61,7 +64,7 @@ class BlockRegistry
     }
 
     /**
-     * Render a block bu ID.
+     * Render a block by ID.
      * Also calls enqueueAssets() as a safety fallback (footer)
      */
     public static function render(string $id, ?int $postId = null): void

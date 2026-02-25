@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace TAW\Blocks;
+namespace TAW\Core;
+
+use TAW\Core\BlockRegistry;
 
 class BlockLoader
 {
@@ -10,7 +12,7 @@ class BlockLoader
     /**
      * Scan the Blocks directory, instantiate every MetaBlock found,
      * and register it in the BlockRegistry.
-     * 
+     *
      * Convention: each block lives in inc/Blocks/[Name]/{Name}.php
      * and the class is TAW\Blocks\{Name}\{Name}
      */

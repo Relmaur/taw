@@ -1,7 +1,9 @@
 <?php
 
 require_once get_template_directory() . '/vendor/autoload.php';
+
 require_once get_template_directory() . '/inc/vite-loader.php';
+require_once get_template_directory() . '/inc/performance.php';
 
 add_action('wp_enqueue_scripts', function () {
     vite_enqueue_theme_assets();
@@ -12,7 +14,7 @@ add_action('admin_init', function () {
 });
 
 // Auto-discover and register all MetaBlocks
-TAW\Blocks\BlockLoader::loadAll();
+TAW\Core\BlockLoader::loadAll();
 
 // Enqueue assets for queued blocks (runs during wp_enqueue_scripts)
-add_action('wp_enqueue_scripts', [TAW\Blocks\BlockRegistry::class, 'enqueueQueuedAssets']);
+add_action('wp_enqueue_scripts', [TAW\Core\BlockRegistry::class, 'enqueueQueuedAssets']);

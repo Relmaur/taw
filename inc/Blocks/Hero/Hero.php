@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace TAW\Blocks\Hero;
 
-use TAW\Blocks\MetaBlock;
-use TAW\Metabox\Metabox;
+use TAW\Core\MetaBlock;
+use TAW\Core\Metabox;
 
 class Hero extends MetaBlock
 {

@@ -61,6 +61,52 @@ function vite_enqueue_theme_assets()
     }
 }
 
+/**
+ * Preload critical production assets.
+ *
+ * Reads the Vite manifest and injects <link rel="preload"> for the main
+ * CSS file. This tells the browser to start fetching the stylesheet before
+ * it encounters the actual <link rel="stylesheet"> tag, improving LCP.
+ *
+ * We only do this in production — in dev mode, Vite serves everything
+ * through its dev server with HMR, so preloading doesn't apply.
+ */
+function vite_preload_critical_assets(): void
+{
+    if (vite_is_dev()) {
+        return;
+    }
+
+    $manifest_path = get_theme_file_path('/public/build/manifest.json');
+
+    if (!file_exists($manifest_path)) {
+        return;
+    }
+
+    $manifest = json_decode(file_get_contents($manifest_path), true);
+
+    // Preload the main CSS — this is our render-critical stylesheet
+    if (isset($manifest['resources/js/app.js']['css'])) {
+        foreach ($manifest['resources/js/app.js']['css'] as $css_file) {
+            printf(
+                '<link rel="preload" href="%s" as="style">' . "\n",
+                esc_url(get_theme_file_uri('/public/build/' . $css_file))
+            );
+        }
+    }
+
+    // Also check for standalone SCSS entry
+    if (isset($manifest['resources/scss/app.scss'])) {
+        $css_file = $manifest['resources/scss/app.scss']['file'];
+        printf(
+            '<link rel="preload" href="%s" as="style">' . "\n",
+            esc_url(get_theme_file_uri('/public/build/' . $css_file))
+        );
+    }
+}
+
+add_action('wp_head', 'vite_preload_critical_assets', 1);
+
 // Add type="module" for Vite
 add_filter('script_loader_tag', function ($tag, $handle, $src) {
     // Dev: all Vite server scripts

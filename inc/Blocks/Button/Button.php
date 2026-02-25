@@ -3,7 +3,7 @@
 
 namespace TAW\Blocks\Button;
 
-use TAW\Blocks\Block;
+use TAW\Core\Block;
 
 class Button extends Block
 {
