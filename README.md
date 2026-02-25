@@ -547,4 +547,4 @@ This repo includes an `AGENTS.md` file at root with comprehensive architecture d
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License. See LICENSE.txt for details.
