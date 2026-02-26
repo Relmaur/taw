@@ -1,5 +1,6 @@
 // 1. Import Styles (so Vite knows to compile them)
-import '../scss/app.scss';
+import '../css/app.css';   // Tailwind v4 utilities
+import '../scss/app.scss'; // Custom SCSS (fonts, etc.)
 
 // 2. Import Alpine
 import Alpine from 'alpinejs';

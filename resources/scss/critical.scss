@@ -19,18 +19,20 @@
  * needs to paint the page in the very first response — no extra requests.
  */
 
-// Font faces need to be here so text renders with the right metrics
-// immediately, preventing layout shift when the full CSS loads.
-@use 'fonts';
+// NOTE: @font-face declarations are NOT included here.
+// Inlined <style> tags resolve URLs from the page URL, not a stylesheet
+// location, so relative font paths always 404 in subdirectory installs.
+// Fonts are declared in app.scss (linked CSS) and preloaded via
+// performance.php so they start downloading before the CSS is even parsed.
 
 // === Base Reset ===
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+// *,
+// *::before,
+// *::after {
+//     box-sizing: border-box;
+//     margin: 0;
+//     padding: 0;
+// }
 
 // === Body Defaults ===
 body {
