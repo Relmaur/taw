@@ -18,3 +18,5 @@ TAW\Core\BlockLoader::loadAll();
 
 // Enqueue assets for queued blocks (runs during wp_enqueue_scripts)
 add_action('wp_enqueue_scripts', [TAW\Core\BlockRegistry::class, 'enqueueQueuedAssets']);
+
+new TAW\Core\Rest\SearchEndpoints();

@@ -36,6 +36,8 @@ class Metabox
     private array  $fields;
     private array $tabs;
     private string $icon;
+    private static bool $post_selector_script_enqueued = false;
+
 
     /** @var callable|null Callback to conditionally show the metabox. Receives WP_Post. */
     private $show_on;
@@ -135,6 +137,20 @@ class Metabox
             wp_enqueue_media();
             $this->enqueue_image_script();
         }
+
+        $has_color = array_filter($this->fields, fn($f) => ($f['type'] ?? '') === 'color');
+
+        if ($has_color) {
+            wp_enqueue_style('wp-color-picker');
+            wp_enqueue_script('wp-color-picker');
+            $this->enqueue_color_script();
+        }
+
+        $has_post_select = array_filter($this->fields, fn($f) => ($f['type'] ?? '') === 'post_select');
+
+        if ($has_post_select) {
+            $this->enqueue_post_selector_script();
+        }
     }
 
     /**
@@ -204,6 +220,53 @@ class Metabox
         });
     }
 
+    private static bool $color_script_enqueued = false;
+
+    private function enqueue_color_script(): void
+    {
+        if (self::$color_script_enqueued) {
+            return;
+        }
+
+        self::$color_script_enqueued = true;
+
+        add_action('admin_footer', static function () {
+        ?>
+            <script>
+                (function($) {
+                    'use strict';
+
+                    // Initialize all color pickers found within a container.
+                    // We make this a named function so repeaters can call it later.
+                    window.tawInitColorPickers = function(container) {
+                        $(container).find('.taw-color-input').each(function() {
+                            // Skip already-initialized fields
+                            if ($(this).closest('.wp-picker-container').length) {
+                                return;
+                            }
+
+                            $(this).wpColorPicker({
+                                change: function(event, ui) {
+                                    // Trigger 'input' so Alpine/other listeners can react
+                                    $(event.target).val(ui.color.toString()).trigger('input');
+                                },
+                                clear: function(event) {
+                                    $(event.target).val('').trigger('input');
+                                }
+                            });
+                        });
+                    };
+
+                    // Initialize on page load
+                    $(document).ready(function() {
+                        tawInitColorPickers(document.body);
+                    });
+                })(jQuery);
+            </script>
+        <?php
+        });
+    }
+
     public function enqueue_assets(): void
     {
         if (self::$assets_enqueued) {
@@ -217,6 +280,267 @@ class Metabox
         //     wp_enqueue_style('taw-metaboxes', get_template_directory_uri() . '/inc/metaboxes/metaboxes.css', [], '1.0');
         // });
     }
+
+    private function enqueue_post_selector_script(): void
+    {
+        if (self::$post_selector_script_enqueued) {
+            return;
+        }
+
+        self::$post_selector_script_enqueued = true;
+
+        // Localize REST data so JS knows where to send requests
+        add_action('admin_footer', static function () {
+            $rest_data = [
+                'url'   => esc_url_raw(rest_url('taw/v1/')),
+                'nonce' => wp_create_nonce('wp_rest'),
+            ];
+        ?>
+            <script>
+                var tawRest = <?php echo wp_json_encode($rest_data); ?>;
+
+                (function($) {
+                    'use strict';
+
+                    /**
+                     * Debounce helper — delays function execution until the user
+                     * stops triggering it for `wait` milliseconds.
+                     */
+                    function debounce(fn, wait) {
+                        var timer;
+                        return function() {
+                            var context = this,
+                                args = arguments;
+                            clearTimeout(timer);
+                            timer = setTimeout(function() {
+                                fn.apply(context, args);
+                            }, wait);
+                        };
+                    }
+
+                    /**
+                     * Initialize all post selectors within a container.
+                     * Exposed globally so repeaters can call it for new rows.
+                     */
+                    window.tawInitPostSelectors = function(container) {
+                        $(container).find('.taw-post-selector').each(function() {
+                            var $wrap = $(this);
+
+                            // Skip already initialized
+                            if ($wrap.data('taw-init')) return;
+                            $wrap.data('taw-init', true);
+
+                            var $input = $wrap.find('.taw-post-selector-input');
+                            var $search = $wrap.find('.taw-post-selector-search');
+                            var $results = $wrap.find('.taw-post-selector-results');
+                            var $selected = $wrap.find('.taw-post-selector-selected');
+
+                            var multiple = $wrap.data('multiple') === 1;
+                            var postTypes = $wrap.data('post-types') || 'post';
+                            var max = parseInt($wrap.data('max'), 10) || 0;
+
+                            // Current selection — initialized from pre-fetched data
+                            var selection = $wrap.data('selected') || [];
+
+                            // Render the current selection on load
+                            renderSelection();
+
+                            // --- Search ---
+
+                            $search.on('input', debounce(function() {
+                                var query = $.trim($(this).val());
+
+                                if (query.length < 1) {
+                                    $results.empty().hide();
+                                    return;
+                                }
+
+                                // Build exclude list from current selection
+                                var excludeIds = selection.map(function(p) {
+                                    return p.id;
+                                }).join(',');
+
+                                $.ajax({
+                                    url: tawRest.url + 'search-posts',
+                                    method: 'GET',
+                                    beforeSend: function(xhr) {
+                                        xhr.setRequestHeader('X-WP-Nonce', tawRest.nonce);
+                                    },
+                                    data: {
+                                        s: query,
+                                        post_type: postTypes,
+                                        per_page: 10,
+                                        exclude: excludeIds
+                                    },
+                                    success: function(data) {
+                                        renderResults(data);
+                                    },
+                                    error: function() {
+                                        $results.html(
+                                            '<div class="taw-ps-no-results">Search failed. Please try again.</div>'
+                                        ).show();
+                                    }
+                                });
+                            }, 300));
+
+                            // Close results when clicking outside
+                            $(document).on('mousedown', function(e) {
+                                if (!$(e.target).closest($wrap).length) {
+                                    $results.empty().hide();
+                                }
+                            });
+
+                            // --- Render results dropdown ---
+
+                            function renderResults(posts) {
+                                $results.empty();
+
+                                if (!posts.length) {
+                                    $results.html(
+                                        '<div class="taw-ps-no-results">No posts found.</div>'
+                                    ).show();
+                                    return;
+                                }
+
+                                posts.forEach(function(post) {
+                                    var $item = $(
+                                        '<div class="taw-ps-result">' +
+                                        (post.thumbnail ?
+                                            '<img src="' + post.thumbnail + '" class="taw-ps-thumb" alt="">' :
+                                            '<span class="taw-ps-thumb taw-ps-thumb--empty"></span>') +
+                                        '<span class="taw-ps-result-info">' +
+                                        '<span class="taw-ps-result-title">' + $('<span>').text(post.title || '(no title)').html() + '</span>' +
+                                        '<span class="taw-ps-result-meta">' + post.post_type + ' · ' + post.date + '</span>' +
+                                        '</span>' +
+                                        '</div>'
+                                    );
+
+                                    $item.on('click', function() {
+                                        selectPost(post);
+                                    });
+
+                                    $results.append($item);
+                                });
+
+                                $results.show();
+                            }
+
+                            // --- Select a post ---
+
+                            function selectPost(post) {
+                                if (!multiple) {
+                                    // Single mode: replace
+                                    selection = [post];
+                                } else {
+                                    // Multi mode: add if not at max
+                                    if (max > 0 && selection.length >= max) return;
+                                    // Prevent duplicates
+                                    var exists = selection.some(function(p) {
+                                        return p.id === post.id;
+                                    });
+                                    if (exists) return;
+                                    selection.push(post);
+                                }
+
+                                updateValue();
+                                renderSelection();
+
+                                // Clear and close search
+                                $search.val('');
+                                $results.empty().hide();
+
+                                // In single mode, hide the search after selection
+                                if (!multiple) {
+                                    $search.closest('.taw-post-selector-search-wrap').hide();
+                                }
+                            }
+
+                            // --- Remove a post ---
+
+                            function removePost(postId) {
+                                selection = selection.filter(function(p) {
+                                    return p.id !== postId;
+                                });
+                                updateValue();
+                                renderSelection();
+
+                                // In single mode, show search again after removal
+                                if (!multiple) {
+                                    $search.closest('.taw-post-selector-search-wrap').show();
+                                }
+                            }
+
+                            // --- Render selected posts ---
+
+                            function renderSelection() {
+                                $selected.empty();
+
+                                if (!selection.length) {
+                                    // Hide search wrap for single mode only if something is selected
+                                    if (!multiple) {
+                                        $search.closest('.taw-post-selector-search-wrap').show();
+                                    }
+                                    return;
+                                }
+
+                                // In single mode, hide search when we have a selection
+                                if (!multiple && selection.length) {
+                                    $search.closest('.taw-post-selector-search-wrap').hide();
+                                }
+
+                                selection.forEach(function(post) {
+                                    var $pill = $(
+                                        '<div class="taw-ps-pill" data-id="' + post.id + '">' +
+                                        (post.thumbnail ?
+                                            '<img src="' + post.thumbnail + '" class="taw-ps-pill-thumb" alt="">' :
+                                            '') +
+                                        '<span class="taw-ps-pill-title">' + $('<span>').text(post.title || '(no title)').html() + '</span>' +
+                                        '<span class="taw-ps-pill-meta">' + post.post_type + '</span>' +
+                                        '<button type="button" class="taw-ps-pill-remove" title="Remove">&times;</button>' +
+                                        '</div>'
+                                    );
+
+                                    $pill.find('.taw-ps-pill-remove').on('click', function() {
+                                        removePost(post.id);
+                                    });
+
+                                    $selected.append($pill);
+                                });
+
+                                // Show count for multi mode with max
+                                if (multiple && max > 0) {
+                                    $selected.append(
+                                        '<div class="taw-ps-count">' + selection.length + ' / ' + max + ' selected</div>'
+                                    );
+                                }
+                            }
+
+                            // --- Sync hidden input ---
+
+                            function updateValue() {
+                                if (!multiple) {
+                                    $input.val(selection.length ? selection[0].id : '');
+                                } else {
+                                    var ids = selection.map(function(p) {
+                                        return p.id;
+                                    });
+                                    $input.val(JSON.stringify(ids));
+                                }
+                            }
+                        });
+                    };
+
+                    // Initialize on page load
+                    $(document).ready(function() {
+                        tawInitPostSelectors(document.body);
+                    });
+
+                })(jQuery);
+            </script>
+        <?php
+        });
+    }
+
 
     /* -------------------------------------------------------------------------
      * Render
@@ -278,7 +602,7 @@ class Metabox
 
         switch ($type) {
 
-            /* ---- Text ---- */
+            /* ---- MARK: Text ---- */
             case 'text':
                 printf(
                     '<input type="text" id="%s" name="%s" value="%s" placeholder="%s" class="regular-text">',
@@ -289,7 +613,7 @@ class Metabox
                 );
                 break;
 
-            /* ---- URL ---- */
+            /* ---- MARK: URL ---- */
             case 'url':
                 printf(
                     '<input type="url" id="%s" name="%s" value="%s" placeholder="%s" class="regular-text">',
@@ -300,7 +624,7 @@ class Metabox
                 );
                 break;
 
-            /* ---- Number ---- */
+            /* ---- MARK: Number ---- */
             case 'number':
                 printf(
                     '<input type="number" id="%s" name="%s" value="%s" placeholder="%s" class="small-text" min="%s" max="%s" step="%s">',
@@ -314,7 +638,7 @@ class Metabox
                 );
                 break;
 
-            /* ---- Textarea ---- */
+            /* ---- MARK: Textarea ---- */
             case 'textarea':
                 // Allow for custom snippets (e.g., code, shortcodes) by not escaping the value. The placeholder can still be escaped.
                 printf(
@@ -327,7 +651,7 @@ class Metabox
                 );
                 break;
 
-            /* ---- WYSIWYG ---- */
+            /* ---- MARK: WYSIWYG ---- */
             case 'wysiwyg':
                 wp_editor($value ?: '', $field_id, [
                     'textarea_name' => $field_id,
@@ -337,7 +661,7 @@ class Metabox
                 ]);
                 break;
 
-            /* ---- Select ---- */
+            /* ---- MARK: Select ---- */
             case 'select':
                 $options = $field['options'] ?? [];
                 printf('<select id="%s" name="%s">', esc_attr($field_id), esc_attr($field_id));
@@ -352,7 +676,65 @@ class Metabox
                 echo '</select>';
                 break;
 
-            /* ---- Image ---- */
+            /* ---- MARK: Checkbox ---- */
+            case 'checkbox':
+                printf(
+                    '<input type="hidden" name="%s" value="0">',
+                    esc_attr($field_id)
+                );
+                printf(
+                    '<label class="taw-toggle"><input type="checkbox" id="%s" name="%s" value="1" %s><span class="taw-toggle-slider"></span></label>',
+                    esc_attr($field_id),
+                    esc_attr($field_id),
+                    checked($value, '1', false) // Returns 'checked="checked"' or ''
+                );
+                break;
+
+            /* ---- MARK: Color Picker ---- */
+            case 'color':
+                $default_color = $field['default'] ?? '';
+                printf(
+                    '<input type="text" id="%s" name="%s" value="%s" class="taw-color-input" data-default-color="%s">',
+                    esc_attr($field_id),
+                    esc_attr($field_id),
+                    esc_attr($value),
+                    esc_attr($default_color)
+                );
+                break;
+
+            /* ---- MARK: Range ---- */
+            case 'range':
+                $min  = $field['min']  ?? 0;
+                $max  = $field['max']  ?? 100;
+                $step = $field['step'] ?? 1;
+                $unit = $field['unit'] ?? '';  // e.g. 'px', '%', 'ms'
+                $current = $value !== '' ? $value : ($field['default'] ?? $min);
+            ?>
+                <div
+                    class="taw-range-field"
+                    x-data="{ val: <?php echo floatval($current); ?> }">
+                    <div class="taw-range-controls">
+                        <input
+                            type="range"
+                            id="<?php echo esc_attr($field_id); ?>"
+                            name="<?php echo esc_attr($field_id); ?>"
+                            min="<?php echo esc_attr($min); ?>"
+                            max="<?php echo esc_attr($max); ?>"
+                            step="<?php echo esc_attr($step); ?>"
+                            x-model="val"
+                            value="<?php echo esc_attr($current); ?>">
+                        <span class="taw-range-value">
+                            <span x-text="val"></span><?php echo esc_html($unit); ?>
+                        </span>
+                    </div>
+                    <span class="taw-range-limits">
+                        <?php echo esc_html($min . $unit); ?> — <?php echo esc_html($max . $unit); ?>
+                    </span>
+                </div>
+            <?php
+                break;
+
+            /* ---- MARK: Image ---- */
             case 'image':
                 $image_url = $value ? wp_get_attachment_url(absint($value)) : '';
             ?>
@@ -382,9 +764,72 @@ class Metabox
                 </div>
             <?php break;
 
+            /* ---- MARK: Group ---- */
             case 'group':
                 $group_fields = $field['fields'] ?? [];
                 $this->render_group($group_fields, $field_id, $post_id);
+                break;
+
+            /* ---- MARK: Post Selector ---- */
+            case 'post_select':
+                $multiple   = !empty($field['multiple']);
+                $post_types = $field['post_type'] ?? 'post';  // string or comma-separated
+                $max        = $field['max'] ?? 0;              // 0 = unlimited (multi only)
+
+                // Decode currently saved value(s)
+                if ($multiple) {
+                    $selected_ids = $value ? json_decode($value, true) : [];
+                    if (!is_array($selected_ids)) $selected_ids = [];
+                } else {
+                    $selected_ids = $value ? [absint($value)] : [];
+                }
+
+                // Pre-fetch selected posts so we can render them immediately
+                $selected_posts = [];
+                foreach ($selected_ids as $pid) {
+                    $p = get_post($pid);
+                    if ($p && $p->post_status === 'publish') {
+                        $thumb_id  = get_post_thumbnail_id($p->ID);
+                        $selected_posts[] = [
+                            'id'        => $p->ID,
+                            'title'     => get_the_title($p),
+                            'post_type' => $p->post_type,
+                            'thumbnail' => $thumb_id ? wp_get_attachment_image_url($thumb_id, 'thumbnail') : '',
+                            'edit_url'  => get_edit_post_link($p->ID, 'raw'),
+                        ];
+                    }
+                }
+            ?>
+                <div class="taw-post-selector"
+                    data-field-id="<?php echo esc_attr($field_id); ?>"
+                    data-multiple="<?php echo $multiple ? '1' : '0'; ?>"
+                    data-post-types="<?php echo esc_attr($post_types); ?>"
+                    data-max="<?php echo intval($max); ?>"
+                    data-selected="<?php echo esc_attr(wp_json_encode($selected_posts)); ?>">
+
+                    <?php // Hidden input holds the actual value that gets submitted 
+                    ?>
+                    <input type="hidden"
+                        class="taw-post-selector-input"
+                        id="<?php echo esc_attr($field_id); ?>"
+                        name="<?php echo esc_attr($field_id); ?>"
+                        value="<?php echo esc_attr($value); ?>">
+
+                    <?php // Selected posts display 
+                    ?>
+                    <div class="taw-post-selector-selected"></div>
+
+                    <?php // Search interface 
+                    ?>
+                    <div class="taw-post-selector-search-wrap">
+                        <input type="text"
+                            class="taw-post-selector-search regular-text"
+                            placeholder="<?php echo esc_attr($multiple ? 'Search to add posts…' : 'Search for a post…'); ?>"
+                            autocomplete="off">
+                        <div class="taw-post-selector-results"></div>
+                    </div>
+                </div>
+            <?php
                 break;
         }
     }
@@ -533,6 +978,8 @@ class Metabox
     }
 
     /**
+     * MARK: Sanitization
+     * 
      * Sanitize a field value based on its type and optional 'sanitize' override.
      */
     private function sanitize_field(array $field, mixed $value): mixed
@@ -551,8 +998,45 @@ class Metabox
             'number'         => floatval($value),
             'image'          => absint($value),
             'wysiwyg'        => wp_kses_post($value),
+            'checkbox'       => in_array($value, ['1', 1, true], true) ? '1' : '0',
+            'range'          => floatval($value),
+            'color'          => sanitize_hex_color($value) ?: '',
+            'post_select'       => $this->sanitize_post_select($field, $value),
             default          => sanitize_text_field($value),
         };
+    }
+
+    /**
+     * Sanitize post selector value.
+     * Single mode: returns a post ID as string.
+     * Multi mode: returns a JSON array of post IDs.
+     */
+    private function sanitize_post_select(array $field, mixed $value): string
+    {
+        $multiple = !empty($field['multiple']);
+
+        if (!$multiple) {
+            // Single mode: just a post ID
+            $id = absint($value);
+            return $id ? (string) $id : '';
+        }
+
+        // Multi mode: JSON array of IDs
+        $ids = json_decode($value, true);
+        if (!is_array($ids)) {
+            return '[]';
+        }
+
+        // Sanitize each ID, remove zeros and duplicates
+        $clean = array_values(array_unique(array_filter(array_map('absint', $ids))));
+
+        // Enforce max if set
+        $max = $field['max'] ?? 0;
+        if ($max > 0) {
+            $clean = array_slice($clean, 0, $max);
+        }
+
+        return wp_json_encode($clean);
     }
 
     /* -------------------------------------------------------------------------
@@ -572,8 +1056,27 @@ class Metabox
     }
 
     /**
-     * Retrieve a meta value and return an image URL.
+     * Retrieve a checkbox/toggle meta value as a boolean.
      *
+     * * Usage: 
+     * 
+     * if (Metabox::get_bool($post->ID, 'hero_show_cta')) {
+     *  // render the CTA
+     * }
+     *
+     * @param int    $post_id  The post/page ID.
+     * @param string $field_id Field ID (without prefix).
+     * @param string $prefix   Meta key prefix. Default '_taw_'.
+     */
+    public static function get_bool(int $post_id, string $field_id, string $prefix = '_taw_'): bool
+    {
+        return (string) get_post_meta($post_id, $prefix . $field_id, true) === '1';
+    }
+
+
+    /**
+     * Retrieve a meta value and return an image URL.
+     * 
      * @param int    $post_id  The post/page ID.
      * @param string $field_id Field ID (without prefix).
      * @param string $size     WordPress image size. Default 'full'.
@@ -588,5 +1091,61 @@ class Metabox
         $src = wp_get_attachment_image_url($attachment_id, $size);
 
         return $src ?: '';
+    }
+
+    /**
+     * Retrieve a color meta value with an optional fallback.
+     * 
+     * Usage:
+     * $bg = Metabox::get_color($post->ID, 'hero_bg_color', '#ffffff');
+     * echo '<section style="background-color: ' . esc_attr($bg) . ';">';
+     *
+     * @param int    $post_id  The post/page ID.
+     * @param string $field_id Field ID (without prefix).
+     * @param string $fallback Fallback color if none is set. Default ''.
+     * @param string $prefix   Meta key prefix. Default '_taw_'.
+     */
+    public static function get_color(int $post_id, string $field_id, string $fallback = '', string $prefix = '_taw_'): string
+    {
+        $color = (string) get_post_meta($post_id, $prefix . $field_id, true);
+        return $color !== '' ? $color : $fallback;
+    }
+
+    /**
+     * Retrieve post selector value as an array of post IDs.
+     * Works for both single and multi mode.
+     * 
+     * Usage:
+     * // Single mode — get the one post
+     * $featured_id = Metabox::get_posts($post->ID, 'featured_post')[0] ?? null;
+     * 
+     * // Multi mode — loop through
+     * $related_ids = Metabox::get_posts($post->ID, 'related_posts');
+     * foreach ($related_ids as $related_id) {
+     *  // render each related post
+     * }
+     *
+     * @param int    $post_id  The post/page ID.
+     * @param string $field_id Field ID (without prefix).
+     * @param string $prefix   Meta key prefix. Default '_taw_'.
+     * @return int[] Array of post IDs.
+     */
+    public static function get_posts(int $post_id, string $field_id, string $prefix = '_taw_'): array
+    {
+        $raw = get_post_meta($post_id, $prefix . $field_id, true);
+
+        if (empty($raw)) {
+            return [];
+        }
+
+        // Try JSON first (multi mode)
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            return array_filter(array_map('absint', $decoded));
+        }
+
+        // Fall back to single ID
+        $id = absint($raw);
+        return $id ? [$id] : [];
     }
 }

@@ -22,20 +22,65 @@ class Hero extends MetaBlock
                     'id' => 'hero_heading',
                     'label' => 'Heading',
                     'type' => 'text',
-                    'width' => '50'
+                    'width' => '33.33'
                 ],
                 [
                     'id' => 'hero_tagline',
                     'label' => 'Tagline',
                     'type' => 'text',
-                    'width' => '50'
+                    'width' => '33.33'
                 ],
                 [
                     'id' => 'hero_image_url',
                     'label' => 'Hero Image',
                     'type' => 'image',
-                    'width' => '100'
-                ]
+                    'width' => '33.33'
+                ],
+                [
+                    'id' => 'hero_show_tagline',
+                    'label' => 'Show Tagline',
+                    'type' => 'checkbox',
+                    'description' => 'Enable or disable the tagline above the heading.',
+                    'width' => '33.33'
+                ],
+                [
+                    'id'          => 'hero_padding',
+                    'label'       => 'Hero Padding',
+                    'type'        => 'range',
+                    'min'         => 20,
+                    'max'         => 200,
+                    'step'        => 10,
+                    'unit'        => 'px',
+                    'default'     => 80,
+                    'description' => 'Vertical padding for the hero section.',
+                    'width'       => '33.33',
+                ],
+                [
+                    'id'          => 'hero_bg_color',
+                    'label'       => 'Background Color',
+                    'type'        => 'color',
+                    // 'default'     => '#0f172a',
+                    'description' => 'Background color for the hero section.',
+                    'width'       => '33.33',
+                ],
+                [
+                    'id'          => 'featured_post',
+                    'label'       => 'Featured Post',
+                    'type'        => 'post_select',
+                    'post_type'   => 'post,page',
+                    'description' => 'Select a single post to feature.',
+                    'width'       => '50'
+                ],
+                [
+                    'id'          => 'related_posts',
+                    'label'       => 'Related Posts',
+                    'type'        => 'post_select',
+                    'post_type'   => 'post',
+                    'multiple'    => true,
+                    'max'         => 5,
+                    'description' => 'Select up to 5 related posts.',
+                    'width'       => '50'
+                ],
             ],
         ]);
     }
