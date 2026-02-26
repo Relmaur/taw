@@ -62,16 +62,15 @@ function vite_enqueue_theme_assets()
 }
 
 /**
- * Preload critical production assets.
+ * Preload critical assets from the Vite manifest.
  *
- * Reads the Vite manifest and injects <link rel="preload"> for the main
- * CSS file. This tells the browser to start fetching the stylesheet before
- * it encounters the actual <link rel="stylesheet"> tag, improving LCP.
+ * Emits <link rel="preload"> for production CSS and JS so the browser
+ * begins fetching them before it reaches the actual enqueue tags.
+ * This shaves time off LCP because discovery happens earlier.
  *
- * We only do this in production — in dev mode, Vite serves everything
- * through its dev server with HMR, so preloading doesn't apply.
+ * In dev mode this does nothing — Vite's dev server handles everything.
  */
-function vite_preload_critical_assets(): void
+function vite_preload_assets()
 {
     if (vite_is_dev()) {
         return;
@@ -85,7 +84,15 @@ function vite_preload_critical_assets(): void
 
     $manifest = json_decode(file_get_contents($manifest_path), true);
 
-    // Preload the main CSS — this is our render-critical stylesheet
+    // Preload the main JS bundle
+    if (isset($manifest['resources/js/app.js']['file'])) {
+        printf(
+            '<link rel="modulepreload" href="%s">' . "\n",
+            esc_url(get_theme_file_uri('/public/build/' . $manifest['resources/js/app.js']['file']))
+        );
+    }
+
+    // Preload CSS files extracted from JS entry
     if (isset($manifest['resources/js/app.js']['css'])) {
         foreach ($manifest['resources/js/app.js']['css'] as $css_file) {
             printf(
@@ -95,17 +102,16 @@ function vite_preload_critical_assets(): void
         }
     }
 
-    // Also check for standalone SCSS entry
-    if (isset($manifest['resources/scss/app.scss'])) {
-        $css_file = $manifest['resources/scss/app.scss']['file'];
+    // Preload standalone CSS entry
+    if (isset($manifest['resources/scss/app.scss']['file'])) {
         printf(
             '<link rel="preload" href="%s" as="style">' . "\n",
-            esc_url(get_theme_file_uri('/public/build/' . $css_file))
+            esc_url(get_theme_file_uri('/public/build/' . $manifest['resources/scss/app.scss']['file']))
         );
     }
 }
 
-add_action('wp_head', 'vite_preload_critical_assets', 1);
+add_action('wp_head', 'vite_preload_assets', 2);
 
 // Add type="module" for Vite
 add_filter('script_loader_tag', function ($tag, $handle, $src) {
