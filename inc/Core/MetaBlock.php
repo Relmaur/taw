@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TAW\Core;
 
-use TAW\Core\Metabox;
+use TAW\Core\Metabox\Metabox;
 
 abstract class MetaBlock extends BaseBlock
 {

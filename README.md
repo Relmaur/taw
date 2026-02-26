@@ -257,7 +257,7 @@ declare(strict_types=1);
 namespace TAW\Blocks\Features;
 
 use TAW\Core\MetaBlock;
-use TAW\Core\Metabox;
+use TAW\Core\Metabox\Metabox;
 
 class Features extends MetaBlock
 {
@@ -378,7 +378,7 @@ if (empty($label)) return;
 
 ## The Metabox Framework
 
-The theme includes a bespoke, configuration-driven metabox framework at `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox`). No plugins needed.
+The theme includes a bespoke, configuration-driven metabox framework at `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). No plugins needed.
 
 ### Supported field types
 

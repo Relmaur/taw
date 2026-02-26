@@ -1,3 +1,9 @@
 main:has(.hero) {
   background-color: black;
 }
+
+/* main {
+  img {
+    width: 100%;
+  }
+} */

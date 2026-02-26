@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TAW\Core;
+namespace TAW\Core\Metabox;
 
 /**
  * Native WordPress Metabox Framework
@@ -124,7 +124,7 @@ class Metabox
 
         wp_enqueue_style(
             'taw-metaboxes',
-            get_template_directory_uri() . '/inc/Metabox/style.css',
+            get_template_directory_uri() . '/inc/Core/Metabox/style.css',
             [],
             '1.0'
         );

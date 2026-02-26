@@ -16,6 +16,7 @@ if (empty($heading) && empty($tagline)) {
 }
 
 use TAW\Blocks\Button\Button;
+use TAW\Helpers\Image;
 
 $button = new Button();
 
@@ -36,8 +37,15 @@ $button = new Button();
             </div>
         </div>
         <?php if ($image_url): ?>
-            <div class="hero__media flex-1">
-                <img src="<?php echo esc_url($image_url); ?>" alt="" class="hero__image w-full h-full object-cover">
+            <div class="image w-full">
+                <?php echo Image::render((int) $image_url, 'full', 'Hero banner', [
+                    'above_fold' => true,
+                    'sizes'      => '100vw',
+                    'class'      => 'hero-image w-full',
+                    'attr'       => [
+                        'style' => 'width: 100%',
+                    ],
+                ]); ?>
             </div>
         <?php endif; ?>
     </div>

@@ -84,3 +84,51 @@ remove_action('wp_head', 'rest_output_link_wp_head');
  */
 remove_action('wp_head', 'wp_oembed_add_discovery_links');
 remove_action('wp_head', 'wp_oembed_add_host_js');
+
+/**
+ * Preload Critical Fonts
+ *
+ * Fonts are discovered late (HTML → CSS → @font-face → download).
+ * Preloading tells the browser to start fetching the font file
+ * immediately, cutting out the CSS-parsing delay.
+ *
+ * Only preload fonts used above the fold (typically 1-2 files).
+ * Over-preloading wastes bandwidth and hurts performance.
+ *
+ * Works with both Vite-hashed fonts (resources/fonts/) and
+ * static fonts (resources/static/fonts/) — the vite_asset_url()
+ * helper resolves the correct path automatically.
+ *
+ * crossorigin is REQUIRED for font preloads, even same-origin.
+ * Without it, the browser fetches the font twice.
+ */
+// Uncomment when you add self-hosted fonts:
+add_action('wp_head', function () {
+    $fonts = [
+        'resources/fonts/Roboto-Regular.woff2',
+        'resources/fonts/Roboto-Bold.woff2',
+    ];
+
+    foreach ($fonts as $font_path) {
+        printf(
+            '<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n",
+            esc_url(vite_asset_url($font_path))
+        );
+    }
+}, 1);
+
+/**
+ * Preload images
+ * 
+ * An example of preloading the hero image on the homepage.
+ * Add additional preloads for other critical images on other pages (preferably 1 per page).
+ */
+add_action('wp_head', function () {
+    if (!is_front_page()) return;
+
+    $hero_id = (int) \TAW\Core\Metabox\Metabox::get(get_the_ID(), 'hero_image_url', '_taw_');
+
+    if ($hero_id) {
+        echo \TAW\Helpers\Image::preload_tag($hero_id, 'full');
+    }
+}, 2);

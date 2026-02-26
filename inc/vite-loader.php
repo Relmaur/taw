@@ -66,7 +66,11 @@ function vite_enqueue_theme_assets()
  *
  * Emits <link rel="preload"> for production CSS and JS so the browser
  * begins fetching them before it reaches the actual enqueue tags.
- * This shaves time off LCP because discovery happens earlier.
+ *
+ * Tracks already-emitted URLs to avoid duplicate preload tags — this
+ * matters because Vite's manifest can reference the same compiled CSS
+ * file from multiple entry points (e.g., SCSS imported in JS AND as
+ * a standalone entry).
  *
  * In dev mode this does nothing — Vite's dev server handles everything.
  */
@@ -83,31 +87,43 @@ function vite_preload_assets()
     }
 
     $manifest = json_decode(file_get_contents($manifest_path), true);
+    $preloaded = []; // Track URLs to prevent duplicates
 
-    // Preload the main JS bundle
+    // Helper: emit a preload tag only if we haven't already
+    $emit = function (string $file, string $type) use (&$preloaded) {
+        $url = get_theme_file_uri('/public/build/' . $file);
+        if (isset($preloaded[$url])) {
+            return;
+        }
+        $preloaded[$url] = true;
+
+        if ($type === 'module') {
+            printf('<link rel="modulepreload" href="%s">' . "\n", esc_url($url));
+        } else {
+            printf('<link rel="preload" href="%s" as="%s">' . "\n", esc_url($url), esc_attr($type));
+        }
+    };
+
+    // 1. Preload the main JS bundle
     if (isset($manifest['resources/js/app.js']['file'])) {
-        printf(
-            '<link rel="modulepreload" href="%s">' . "\n",
-            esc_url(get_theme_file_uri('/public/build/' . $manifest['resources/js/app.js']['file']))
-        );
+        $emit($manifest['resources/js/app.js']['file'], 'module');
     }
 
-    // Preload CSS files extracted from JS entry
+    // 2. Preload Tailwind CSS (your biggest stylesheet)
+    if (isset($manifest['resources/css/app.css']['file'])) {
+        $emit($manifest['resources/css/app.css']['file'], 'style');
+    }
+
+    // 3. Preload CSS files extracted from JS entry (SCSS imported in app.js)
     if (isset($manifest['resources/js/app.js']['css'])) {
         foreach ($manifest['resources/js/app.js']['css'] as $css_file) {
-            printf(
-                '<link rel="preload" href="%s" as="style">' . "\n",
-                esc_url(get_theme_file_uri('/public/build/' . $css_file))
-            );
+            $emit($css_file, 'style');
         }
     }
 
-    // Preload standalone CSS entry
+    // 4. Preload standalone SCSS entry (deduplicated — skipped if already emitted above)
     if (isset($manifest['resources/scss/app.scss']['file'])) {
-        printf(
-            '<link rel="preload" href="%s" as="style">' . "\n",
-            esc_url(get_theme_file_uri('/public/build/' . $manifest['resources/scss/app.scss']['file']))
-        );
+        $emit($manifest['resources/scss/app.scss']['file'], 'style');
     }
 }
 
@@ -125,3 +141,50 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
     }
     return $tag;
 }, 10, 3);
+
+/**
+ * Resolve a theme asset path, checking the Vite manifest first.
+ *
+ * In production, assets processed by Vite get hashed filenames for
+ * cache-busting (e.g., Inter-Regular-Bx7kZ3.woff2). This function
+ * checks the manifest for the hashed version and falls back to the
+ * raw file path if the asset wasn't processed by Vite.
+ *
+ * This lets developers choose either approach:
+ *
+ *   1. Vite-processed (hashed):
+ *      Place fonts in resources/fonts/ and reference in SCSS.
+ *      Vite hashes them → manifest maps original → hashed path.
+ *
+ *   2. Static (unhashed):
+ *      Place fonts in resources/static/fonts/.
+ *      Not in the manifest → function returns the direct URI.
+ *
+ * @param string $path Relative path from theme root (e.g., 'resources/fonts/Inter-Regular.woff2')
+ * @return string Full URL to the asset (hashed if available, raw otherwise)
+ */
+function vite_asset_url(string $path): string
+{
+    // In dev mode, serve directly from Vite
+    if (vite_is_dev()) {
+        return VITE_SERVER . '/' . ltrim($path, '/');
+    }
+
+    // In production, check the manifest for a hashed version
+    static $manifest = null;
+
+    if ($manifest === null) {
+        $manifest_path = get_theme_file_path('/public/build/manifest.json');
+        $manifest = file_exists($manifest_path)
+            ? json_decode(file_get_contents($manifest_path), true)
+            : [];
+    }
+
+    // If Vite processed this file, use the hashed version
+    if (isset($manifest[$path]['file'])) {
+        return get_theme_file_uri('/public/build/' . $manifest[$path]['file']);
+    }
+
+    // Otherwise, serve the file directly from the theme directory
+    return get_theme_file_uri('/' . ltrim($path, '/'));
+}

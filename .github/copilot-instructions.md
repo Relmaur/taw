@@ -18,7 +18,7 @@ A classic WordPress theme with a custom block system, Vite v7, Tailwind v4, Alpi
 ## When generating code
 
 - New blocks: extend `TAW\Core\MetaBlock` or `TAW\Core\Block`, follow the naming convention exactly
-- Use `use TAW\Core\MetaBlock;`, `use TAW\Core\Block;`, `use TAW\Core\Metabox;`, `use TAW\Core\BlockRegistry;`
+- Use `use TAW\Core\MetaBlock;`, `use TAW\Core\Block;`, `use TAW\Core\Metabox\Metabox;`, `use TAW\Core\BlockRegistry;`
 - Templates: use `esc_html()`, `esc_url()`, `esc_attr()` for all output
 - Metabox fields: use types `text`, `textarea`, `wysiwyg`, `url`, `number`, `select`, `image`, `group`
 - Meta keys follow pattern `_taw_{field_id}`

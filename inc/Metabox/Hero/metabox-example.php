@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 namespace TAW\Metabox;
 
-use TAW\Core\Metabox;
+use TAW\Core\Metabox\Metabox;
 
 if (!defined('ABSPATH')) {
     exit;

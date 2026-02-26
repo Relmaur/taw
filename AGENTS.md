@@ -123,7 +123,7 @@ declare(strict_types=1);
 namespace TAW\Blocks\Features;
 
 use TAW\Core\MetaBlock;
-use TAW\Core\Metabox;
+use TAW\Core\Metabox\Metabox;
 
 class Features extends MetaBlock
 {
@@ -220,7 +220,7 @@ Usage in any template:
 
 ## The Metabox Framework
 
-Located in `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox`). Configuration-driven, supports:
+Located in `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). Configuration-driven, supports:
 
 **Field types:** `text`, `textarea`, `wysiwyg`, `url`, `number`, `select`, `image`, `group`
 
@@ -302,7 +302,7 @@ Namespace mapping:
 - `TAW\Core\Block` → `inc/Core/Block.php`
 - `TAW\Core\BlockRegistry` → `inc/Core/BlockRegistry.php`
 - `TAW\Core\BlockLoader` → `inc/Core/BlockLoader.php`
-- `TAW\Core\Metabox` → `inc/Core/Metabox.php`
+- `TAW\Core\Metabox\Metabox` → `inc/Core/Metabox.php`
 - `TAW\Blocks\Hero\Hero` → `inc/Blocks/Hero/Hero.php`
 
 After adding new classes, run `composer dump-autoload` if autoloading fails.
