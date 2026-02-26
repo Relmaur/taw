@@ -86,10 +86,18 @@ taw-theme/
 │   │       ├── Button.php         #      Class (defaults + props)
 │   │       └── index.php          #      Template
 │   └── vite-loader.php            # ← Vite ↔ WordPress bridge
+├── inc/
+│   ├── vite-loader.php            # ← Vite ↔ WordPress bridge (CSS pipeline, preloads)
+│   └── performance.php            # ← Resource hints, font preloads, WP bloat removal
 ├── resources/
-│   ├── css/app.css                # Tailwind v4 entry point
-│   ├── scss/app.scss              # Global SCSS (non-Tailwind custom styles)
-│   └── js/app.js                  # Alpine.js + global JS
+│   ├── css/
+│   │   └── app.css                # Tailwind v4 directives (imported by app.js)
+│   ├── fonts/                     # Self-hosted WOFF2 font files
+│   ├── scss/
+│   │   ├── app.scss               # Global SCSS (fonts, custom styles) — imported by app.js
+│   │   ├── critical.scss          # Above-the-fold CSS — inlined in <head>
+│   │   └── _fonts.scss            # @font-face declarations
+│   └── js/app.js                  # Alpine.js + global JS (imports Tailwind CSS + SCSS)
 ├── public/build/                  # Compiled assets (gitignored, auto-generated)
 ├── functions.php                  # Theme bootstrap (minimal)
 ├── header.php                     # Global header
@@ -448,18 +456,25 @@ All meta keys are stored as `_taw_{field_id}` by default.
 - **Dev mode:** Assets served directly from Vite with HMR. Styles update instantly, JS hot-reloads, PHP changes trigger a full page refresh.
 - **Production:** Reads `public/build/manifest.json` and enqueues hashed, minified files.
 
+### CSS loading pipeline
+
+Production CSS loads in three non-blocking layers:
+
+1. **Critical CSS** (`critical.scss`) — compiled and inlined as a `<style>` tag in `<head>`. Zero network requests. Keep it under ~14 KB (first TCP round-trip). No `@font-face` here.
+2. **Main CSS** (from `app.js`) — preloaded with `<link rel="preload">` then loaded asynchronously via `media="print" onload="this.media='all'"`. Non-render-blocking.
+3. **Block CSS** — per-block stylesheets, enqueued only on pages that render each block.
+
 ### What gets compiled
 
 | Entry point | Purpose |
 |---|---|
-| `resources/css/app.css` | Tailwind v4 (scans all `.php` files for classes) |
-| `resources/scss/app.scss` | Global custom SCSS |
-| `resources/js/app.js` | Alpine.js + global JS |
+| `resources/js/app.js` | Main entry — Alpine.js + imports Tailwind CSS (`app.css`) + custom SCSS (`app.scss`) |
+| `resources/scss/critical.scss` | Above-the-fold CSS — standalone entry, inlined in `<head>` |
 | `inc/Blocks/*/style.css` | Per-block styles (auto-discovered) |
-| `inc/Blocks/*/style.scss` | Per-block SCSS (auto-discovered, prioritized over .css) |
+| `inc/Blocks/*/style.scss` | Per-block SCSS (auto-discovered) |
 | `inc/Blocks/*/script.js` | Per-block scripts (auto-discovered) |
 
-Block assets are auto-discovered by `vite.config.js` at build time — adding a `style.css` or `script.js` to a block folder is all you need.
+`resources/css/app.css` (Tailwind) and `resources/scss/app.scss` (custom SCSS) are **imported by `app.js`**, not standalone Vite entries. Block assets are auto-discovered by `vite.config.js` at build time — adding a `style.css` or `script.js` to a block folder is all you need.
 
 ---
 

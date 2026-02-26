@@ -11,10 +11,14 @@
 |---|---|
 | `inc/Core/` | Framework internals — base classes, registry, loader, metabox engine |
 | `inc/Blocks/` | Dev block collection — one folder per block, auto-discovered |
-| `inc/vite-loader.php` | Vite ↔ WordPress bridge (dev/prod) |
-| `resources/css/app.css` | Tailwind v4 entry point |
-| `resources/scss/app.scss` | Global SCSS (non-Tailwind styles) |
-| `resources/js/app.js` | Alpine.js + global JS entry |
+| `inc/vite-loader.php` | Vite ↔ WordPress bridge (dev/prod, CSS pipeline, preloads) |
+| `inc/performance.php` | Resource hints, font preloads, WP frontend bloat removal |
+| `resources/js/app.js` | Alpine.js + global JS — imports Tailwind CSS and custom SCSS |
+| `resources/css/app.css` | Tailwind v4 directives (`@import "tailwindcss"`) — imported by `app.js` |
+| `resources/scss/app.scss` | Global custom SCSS (fonts, overrides) — imported by `app.js` |
+| `resources/scss/critical.scss` | Above-the-fold CSS — compiled and inlined in `<head>` |
+| `resources/scss/_fonts.scss` | `@font-face` declarations for self-hosted fonts |
+| `resources/fonts/` | Self-hosted WOFF2 font files |
 | `functions.php` | Theme bootstrap (minimal — delegates to block system) |
 
 ---
@@ -245,10 +249,62 @@ Metabox::get_image_url(int $postId, string $fieldId, string $size = 'full'): str
 
 ### How it works
 
-`inc/vite-loader.php` detects whether Vite dev server is running via `fsockopen()` on port 5173.
+`inc/vite-loader.php` detects whether the Vite dev server is running via `fsockopen()` on port 5173.
 
-- **Dev:** Assets served from `http://localhost:5173` with HMR
+- **Dev:** `app.js` (+ its CSS imports) served from `http://localhost:5173` with HMR
 - **Prod:** Reads `public/build/manifest.json` for hashed filenames
+
+### CSS loading pipeline (production)
+
+CSS is loaded in three layers to maximise paint speed:
+
+```
+1. critical.scss  → compiled → inlined as <style> in <head>   (zero network request)
+2. app.js CSS     → <link rel="preload"> + async <link media="print" onload="...">
+3. app.scss CSS   → same async pattern (deduped if same compiled file)
+```
+
+The async `media="print"` trick makes stylesheets non-render-blocking — the browser downloads them in the background and swaps them in when ready. A `<noscript>` fallback covers JS-disabled users.
+
+### CSS entry points
+
+| File | How loaded |
+|---|---|
+| `resources/js/app.js` | Vite JS entry. Imports `app.css` + `app.scss` — both compile into the JS entry's CSS output. In dev this is the only PHP-loaded script; Vite HMR injects styles automatically. |
+| `resources/css/app.css` | Tailwind v4 (`@import "tailwindcss"`, `@source "../../**/*.php"`). Imported by `app.js`, **not** a standalone Vite entry. |
+| `resources/scss/app.scss` | Custom SCSS (fonts, global rules). Imported by `app.js`. |
+| `resources/scss/critical.scss` | Standalone Vite entry. Inlined into `<head>` by `vite_inline_critical_css()`. Must stay under ~14 KB. No `@font-face` here — inlined CSS resolves `url()` against the page origin, not a stylesheet location, causing 404s. |
+| `inc/Blocks/*/style.css` | Per-block styles. Auto-discovered by `vite.config.js`, separate Rollup entries. |
+
+### Key Vite config decisions
+
+```js
+base: command === 'build' ? './' : '/'
+```
+Production uses a relative base so compiled CSS references fonts as `./Roboto-xxx.woff2` — resolves correctly relative to the CSS file regardless of WordPress install path.
+Dev uses `'/'` because Vite's HMR and module resolution break with a relative base when scripts are served cross-origin.
+
+```js
+server: { origin: 'http://localhost:5173' }
+```
+Forces Vite to embed the full dev server URL in injected CSS (e.g. `url('http://localhost:5173/resources/fonts/...')`). Without this, Vite writes `/resources/fonts/...` which the browser resolves against the WordPress page origin, causing font 404s.
+
+### Self-hosted fonts
+
+- Place WOFF2 files in `resources/fonts/`
+- Declare `@font-face` in `resources/scss/_fonts.scss` with `url('../fonts/Name.woff2')`
+- `@use 'fonts'` in `app.scss` (linked CSS) — Vite rewrites the URL correctly
+- **Never** `@use 'fonts'` in `critical.scss` — inlined styles can't resolve relative asset paths
+- Register preloads in `inc/performance.php` via `vite_asset_url('resources/fonts/Name.woff2')` — this returns the dev server URL in dev and the hashed build URL in prod
+
+### Helper: `vite_asset_url(string $path): string`
+
+Resolves any theme asset to the correct URL in both modes:
+```php
+vite_asset_url('resources/fonts/Roboto-Regular.woff2')
+// Dev  → 'http://localhost:5173/resources/fonts/Roboto-Regular.woff2'
+// Prod → 'https://example.com/.../public/build/assets/Roboto-Regular-B51t0g.woff2'
+```
 
 ### Block assets in Vite
 
@@ -265,7 +321,7 @@ These become separate Rollup entry points → separate cached files in productio
 
 The `script_loader_tag` filter in `vite-loader.php` adds `type="module"` to:
 - All scripts from `VITE_SERVER` (dev)
-- `theme-app` and `taw-block-*` handles (prod)
+- `theme-app` and `taw-component-*` handles (prod)
 
 ---
 
@@ -367,3 +423,6 @@ protected function getData(int $postId): array
 - Call `wp_enqueue_style/script` directly for blocks — the base class handles it
 - Create blocks with mismatched folder/class names — auto-discovery will skip them
 - Forget to `queue()` blocks before `get_header()` — assets will fall back to inline (suboptimal)
+- Add `@font-face` / `@use 'fonts'` to `critical.scss` — inlined `<style>` tags resolve `url()` against the page origin, not the stylesheet, causing font 404s on any non-root install
+- Add `resources/css/app.css` back as a standalone Vite entry — it is imported by `app.js` and must not be a separate entry or it will compile twice
+- Set `base: './'` globally in `vite.config.js` — it must only apply to `build` (dev mode breaks with a relative base in cross-origin setups)

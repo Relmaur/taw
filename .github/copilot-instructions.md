@@ -15,6 +15,15 @@ A classic WordPress theme with a custom block system, Vite v7, Tailwind v4, Alpi
 - Asset queueing: `BlockRegistry::queue()` before `get_header()`, then `BlockRegistry::render()` in body
 - PSR-4: `TAW\` → `inc/`
 
+## CSS / Asset Pipeline
+
+- `resources/js/app.js` imports `../css/app.css` (Tailwind v4) and `../scss/app.scss` (custom SCSS) — neither is a standalone Vite entry
+- `resources/scss/critical.scss` is a standalone Vite entry compiled and **inlined** in `<head>` — keep under ~14 KB, no `@font-face` inside it
+- Main CSS loads asynchronously (non-render-blocking via `media="print"`) in production
+- Self-hosted fonts live in `resources/fonts/`; `@font-face` goes in `resources/scss/_fonts.scss`, used via `@use 'fonts'` in `app.scss` only
+- `vite_asset_url()` in `inc/vite-loader.php` resolves font/asset paths correctly in both dev and prod
+- Add font preloads in `inc/performance.php` via `vite_asset_url()`
+
 ## When generating code
 
 - New blocks: extend `TAW\Core\MetaBlock` or `TAW\Core\Block`, follow the naming convention exactly
