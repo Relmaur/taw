@@ -1,143 +1,54 @@
 # TAW Theme
 
-**A component-based WordPress theme built with Tailwind CSS, Alpine.js, and Vite.**
+**A modern WordPress theme framework that makes building custom pages feel like assembling components — not fighting WordPress.**
 
-TAW ships a custom block architecture where every section of a page — hero, stats, testimonials — is a self-contained block that owns its data, markup, styles, and scripts. Only the assets a page actually uses get loaded.
+TAW (Tailwind + Alpine + WordPress) gives you a clean, component-based block architecture on top of classic WordPress. Every section of a page — hero, stats, testimonials — is a self-contained block that owns its data, markup, styles, and scripts. Only the assets a page actually uses get loaded.
 
----
-
-## Requirements
-
-| Dependency | Version |
-|------------|---------|
-| WordPress  | 6.0+    |
-| PHP        | 7.4+    |
-| Composer   | 2.0+    |
-| Node.js    | 20.19+  |
-| npm        | 8+      |
+No Gutenberg blocks. No ACF dependency. No bloat. Just PHP classes, templates, and a convention that works.
 
 ---
 
-## Installation
+## Why TAW?
+
+**Zero-config blocks.** Create a folder, drop in a class and a template — it's live. No registration, no `functions.php` edits, no build step required for new blocks.
+
+**Scoped asset loading.** Each block can ship its own CSS and JS. Assets are only enqueued on pages that use that block. Your homepage doesn't load your blog's scripts.
+
+**A real data layer.** MetaBlocks own their data through a bespoke metabox framework. No plugin dependencies for custom fields — field registration, rendering, and retrieval are built in.
+
+**Modern frontend, classic WordPress.** Tailwind v4 for utility CSS, Alpine.js for interactivity, Vite for instant HMR — all wired into WordPress through a lightweight bridge. No React, no REST API overhead.
+
+**AI-native DX.** Ships with `AGENTS.md`, `CLAUDE.md`, and Copilot/Windsurf instructions so any AI coding assistant understands the architecture out of the box.
+
+---
+
+## Quick Start
 
 ```bash
-# Navigate to the theme directory
 cd wp-content/themes/taw-theme
 
-# Install PHP dependencies (autoloader)
-composer install
-
-# Install Node dependencies
-npm install
-
-# Activate the theme in WordPress admin
+composer install       # PHP autoloader
+npm install            # Frontend dependencies
+npm run dev            # Vite dev server with HMR
 ```
+
+Activate the theme in WordPress admin. You're building.
 
 ---
 
-## Development
+## Create a Block in 60 Seconds
 
-### Start the dev server
+Every block is a folder inside `inc/Blocks/`. The folder name **must** match the class name — that's the only rule.
 
-```bash
-npm run dev
-```
-
-This starts Vite on `http://localhost:5173` with:
-
-- **HMR** for instant style and JS updates
-- **Full-page reload** when PHP or Twig files change
-- **Tailwind CSS** JIT compilation scanning all `.php` files
-
-### Build for production
-
-```bash
-npm run build
-```
-
-Compiles and minifies all assets to `public/build/` with hashed filenames and a `manifest.json` for cache-busting.
-
-### Other commands
-
-| Command | Description |
-|---------|-------------|
-| `composer dump-autoload` | Rebuild PSR-4 classmap after adding new PHP classes |
-
----
-
-## Project Structure
-
-```
-taw-theme/
-├── inc/
-│   ├── Core/                      # ← Framework internals (namespace TAW\Core)
-│   │   ├── BaseBlock.php          #    Abstract base — asset loading, template rendering
-│   │   ├── MetaBlock.php          #    Data-owning blocks (metaboxes + post_meta)
-│   │   ├── Block.php              #    Presentational blocks (receives props)
-│   │   ├── BlockRegistry.php      #    Static registry — queue, enqueue, render
-│   │   ├── BlockLoader.php        #    Auto-discovers blocks by scanning inc/Blocks/
-│   │   └── Metabox.php            #    Config-driven metabox framework
-│   ├── Blocks/                    # ← Dev block collection (one folder per block)
-│   │   ├── Hero/                  #    Example MetaBlock
-│   │   │   ├── Hero.php           #      Class (metaboxes + data logic)
-│   │   │   ├── index.php          #      Template (pure markup)
-│   │   │   └── style.css          #      Scoped styles (auto-enqueued)
-│   │   └── Button/                #    Example UI Block
-│   │       ├── Button.php         #      Class (defaults + props)
-│   │       └── index.php          #      Template
-│   └── vite-loader.php            # ← Vite ↔ WordPress bridge
-├── inc/
-│   ├── vite-loader.php            # ← Vite ↔ WordPress bridge (CSS pipeline, preloads)
-│   └── performance.php            # ← Resource hints, font preloads, WP bloat removal
-├── resources/
-│   ├── css/
-│   │   └── app.css                # Tailwind v4 directives (imported by app.js)
-│   ├── fonts/                     # Self-hosted WOFF2 font files
-│   ├── scss/
-│   │   ├── app.scss               # Global SCSS (fonts, custom styles) — imported by app.js
-│   │   ├── critical.scss          # Above-the-fold CSS — inlined in <head>
-│   │   └── _fonts.scss            # @font-face declarations
-│   └── js/app.js                  # Alpine.js + global JS (imports Tailwind CSS + SCSS)
-├── public/build/                  # Compiled assets (gitignored, auto-generated)
-├── functions.php                  # Theme bootstrap (minimal)
-├── header.php                     # Global header
-├── footer.php                     # Global footer
-├── index.php                      # Main template
-├── vite.config.js                 # Vite configuration
-├── composer.json                  # PHP deps + PSR-4 autoloading
-├── package.json                   # Node deps + scripts
-├── AGENTS.md                      # AI agent documentation
-└── style.css                      # WordPress theme metadata
-```
-
----
-
-## Architecture
-
-### The Block System
-
-Every visual section on a page is a **block** — a self-contained unit with its own class, template, and optional assets.
-
-```
-inc/Blocks/{Name}/
-├── {Name}.php      ← Class (logic + data)
-├── index.php       ← Template (markup)
-├── style.css       ← Optional scoped styles (or style.scss)
-└── script.js       ← Optional scoped JavaScript
-```
-
-There are two types of blocks:
-
-#### MetaBlock — Data-owning sections
-
-These are the building blocks of pages. Each MetaBlock:
-
-- Registers its own metabox fields in the WordPress editor
-- Fetches its own data from `post_meta`
-- Renders itself with that data
+### 1. The Class
 
 ```php
 // inc/Blocks/Hero/Hero.php
+
+namespace TAW\Blocks\Hero;
+
+use TAW\Core\MetaBlock;
+use TAW\Core\Metabox\Metabox;
 
 class Hero extends MetaBlock
 {
@@ -166,6 +77,8 @@ class Hero extends MetaBlock
 }
 ```
 
+### 2. The Template
+
 ```php
 <!-- inc/Blocks/Hero/index.php -->
 
@@ -179,379 +92,56 @@ class Hero extends MetaBlock
 </section>
 ```
 
-#### Block — Presentational UI components
-
-These are reusable UI elements (buttons, cards, badges) that receive data as props rather than fetching it:
-
-```php
-// inc/Blocks/Button/Button.php
-
-class Button extends Block
-{
-    protected string $id = 'button';
-
-    protected function defaults(): array
-    {
-        return [
-            'text'    => '',
-            'url'     => '#',
-            'variant' => 'primary',
-        ];
-    }
-}
-```
-
-Used directly in any template:
-
-```php
-<?php (new TAW\Blocks\Button\Button())->render([
-    'text'    => 'Get Started',
-    'url'     => '/contact',
-    'variant' => 'secondary',
-]); ?>
-```
-
-### Auto-Discovery
-
-`BlockLoader::loadAll()` scans `inc/Blocks/*/` at boot and registers every MetaBlock it finds. **You never need to touch `functions.php` when adding new blocks.** Just create the folder and class, and it's live.
-
-The convention is strict: the folder name **must** match the class name.
-
-```
-inc/Blocks/Hero/Hero.php       ✅  Auto-discovered
-inc/Blocks/hero/Hero.php       ❌  Folder/class mismatch
-inc/Blocks/HeroSection/Hero.php ❌  Folder/class mismatch
-```
-
-### Conditional Asset Loading
-
-Block stylesheets and scripts are only loaded on pages that use them. This is managed through a queue pattern:
+### 3. Use It
 
 ```php
 <?php
+// front-page.php
 use TAW\Core\BlockRegistry;
 
-// 1. Declare which blocks this page needs (BEFORE get_header)
-BlockRegistry::queue('hero', 'stats', 'cta');
-
-// 2. get_header() fires wp_head — queued assets land in <head>
+BlockRegistry::queue('hero');
 get_header();
 ?>
 
-<!-- 3. Render blocks in the body -->
 <?php BlockRegistry::render('hero'); ?>
-<?php BlockRegistry::render('stats'); ?>
-<?php BlockRegistry::render('cta'); ?>
 
 <?php get_footer(); ?>
 ```
 
-The `queue()` call **must** come before `get_header()` so stylesheets end up in `<head>`. If you forget, a safety fallback prints them inline — it works, but may cause a flash of unstyled content.
+That's it. No registration step. The block auto-discovers itself, its metabox appears in the editor, and its assets load only where it's used.
 
 ---
 
-## Creating a New Block
+## Two Types of Blocks
 
-### MetaBlock (page section with admin fields)
+| | MetaBlock | Block |
+|---|---|---|
+| **Purpose** | Page sections that own their data | Reusable UI components |
+| **Data source** | Metaboxes → `post_meta` | Props passed at render time |
+| **Rendered via** | `BlockRegistry::render('id')` | `(new Button())->render([...])` |
+| **Examples** | Hero, Stats, Testimonials, CTA | Button, Card, Badge |
 
-**1. Create the class:**
+### Nesting Blocks
 
-```php
-<?php
-// inc/Blocks/Features/Features.php
-
-declare(strict_types=1);
-
-namespace TAW\Blocks\Features;
-
-use TAW\Core\MetaBlock;
-use TAW\Core\Metabox\Metabox;
-
-class Features extends MetaBlock
-{
-    protected string $id = 'features';
-
-    protected function registerMetaboxes(): void
-    {
-        new Metabox([
-            'id'     => 'taw_features',
-            'title'  => 'Features Section',
-            'screen' => 'page',
-            'fields' => [
-                ['id' => 'features_heading',     'label' => 'Heading',     'type' => 'text'],
-                ['id' => 'features_description', 'label' => 'Description', 'type' => 'textarea'],
-            ],
-        ]);
-    }
-
-    protected function getData(int $postId): array
-    {
-        return [
-            'heading'     => $this->getMeta($postId, 'features_heading'),
-            'description' => $this->getMeta($postId, 'features_description'),
-        ];
-    }
-}
-```
-
-**2. Create the template:**
+UI Blocks compose naturally inside MetaBlocks:
 
 ```php
-<?php
-// inc/Blocks/Features/index.php
+<!-- inc/Blocks/Hero/index.php -->
+<section class="hero">
+    <h1><?php echo esc_html($heading); ?></h1>
 
-/** @var string $heading */
-/** @var string $description */
-
-if (empty($heading)) return;
-?>
-
-<section class="features py-20">
-    <div class="max-w-7xl mx-auto px-6">
-        <h2 class="text-4xl font-bold"><?php echo esc_html($heading); ?></h2>
-        <?php if ($description): ?>
-            <p class="mt-4 text-lg text-gray-600"><?php echo esc_html($description); ?></p>
-        <?php endif; ?>
-    </div>
+    <?php (new \TAW\Blocks\Button\Button())->render([
+        'text' => 'Get Started',
+        'url'  => '/contact',
+    ]); ?>
 </section>
 ```
-
-**3. Optionally add `style.css` or `style.scss` and `script.js`.**
-
-**4. Use it in a template:**
-
-```php
-<?php
-BlockRegistry::queue('features');
-get_header();
-?>
-<?php BlockRegistry::render('features'); ?>
-<?php get_footer(); ?>
-```
-
-That's it. No registration, no `functions.php` changes, no manual asset wiring.
-
-### UI Block (presentational component)
-
-**1. Create the class:**
-
-```php
-<?php
-// inc/Blocks/Badge/Badge.php
-
-declare(strict_types=1);
-
-namespace TAW\Blocks\Badge;
-
-use TAW\Core\Block;
-
-class Badge extends Block
-{
-    protected string $id = 'badge';
-
-    protected function defaults(): array
-    {
-        return [
-            'label'   => '',
-            'variant' => 'default', // 'default', 'success', 'warning'
-        ];
-    }
-}
-```
-
-**2. Create the template:**
-
-```php
-<?php
-// inc/Blocks/Badge/index.php
-
-/** @var string $label */
-/** @var string $variant */
-
-if (empty($label)) return;
-?>
-
-<span class="badge badge--<?php echo esc_attr($variant); ?>">
-    <?php echo esc_html($label); ?>
-</span>
-```
-
-**3. Use anywhere:**
-
-```php
-<?php (new TAW\Blocks\Badge\Badge())->render(['label' => 'New', 'variant' => 'success']); ?>
-```
-
----
-
-## The Metabox Framework
-
-The theme includes a bespoke, configuration-driven metabox framework at `inc/Core/Metabox/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). No plugins needed.
-
-### Supported field types
-
-| Type | Description | Notable options |
-|------|-------------|-----------------|
-| `text` | Single-line text input | `placeholder` |
-| `textarea` | Multi-line text | `rows`, `placeholder` |
-| `wysiwyg` | WordPress rich text editor | `rows`, `media_buttons`, `teeny` |
-| `url` | URL input | `placeholder` |
-| `number` | Numeric input | `min`, `max`, `step`, `placeholder` |
-| `select` | Dropdown | `options` (assoc array of value → label) |
-| `checkbox` | Toggle switch (stores `'1'` / `'0'`) | — |
-| `color` | WordPress color picker | `default` |
-| `range` | Slider with live value display | `min`, `max`, `step`, `unit`, `default` |
-| `image` | WordPress media picker (stores attachment ID) | — |
-| `post_select` | Searchable post picker, single or multi | `post_type`, `multiple`, `max` |
-| `repeater` | Sortable rows of sub-fields | `fields`, `min`, `max`, `button_label` |
-| `group` | Inline group of sub-fields (no rows) | `fields` |
-
-### Features
-
-- **Tabs** — Group fields into tabbed sections with optional icons
-- **Conditional display** — `show_on` callback to show metabox only on specific pages
-- **Field widths** — `'width' => '50'` for side-by-side layout (any percentage)
-- **Code sanitization** — `'sanitize' => 'code'` preserves raw HTML/code for trusted users
-- **Repeater drag-and-drop** — rows are sortable via jQuery UI; order is preserved on save
-- **Post selector** — live REST search with thumbnail previews; supports single or multi-select with a max cap
-
-### Configuration example
-
-```php
-new Metabox([
-    'id'       => 'taw_hero',
-    'title'    => 'Hero Section',
-    'screen'   => 'page',
-    'show_on'  => function (\WP_Post $post): bool {
-        $front = absint(get_option('page_on_front'));
-        return $front === 0 || $post->ID === $front;
-    },
-    'tabs' => [
-        ['id' => 'content', 'label' => 'Content', 'fields' => ['hero_heading', 'hero_tagline']],
-        ['id' => 'style',   'label' => 'Style',   'fields' => ['hero_bg_color', 'hero_padding']],
-    ],
-    'fields' => [
-        ['id' => 'hero_heading',  'label' => 'Heading',  'type' => 'text',  'width' => '50'],
-        ['id' => 'hero_tagline',  'label' => 'Tagline',  'type' => 'text',  'width' => '50'],
-        ['id' => 'hero_bg_color', 'label' => 'BG Color', 'type' => 'color', 'default' => '#0f172a'],
-        ['id' => 'hero_padding',  'label' => 'Padding',  'type' => 'range', 'min' => 20, 'max' => 200, 'step' => 10, 'unit' => 'px', 'default' => 80],
-        ['id' => 'hero_image',    'label' => 'Image',    'type' => 'image'],
-        ['id' => 'show_cta',      'label' => 'Show CTA', 'type' => 'checkbox'],
-        [
-            'id'        => 'featured_post',
-            'label'     => 'Featured Post',
-            'type'      => 'post_select',
-            'post_type' => 'post,page',
-        ],
-        [
-            'id'        => 'related_posts',
-            'label'     => 'Related Posts',
-            'type'      => 'post_select',
-            'post_type' => 'post',
-            'multiple'  => true,
-            'max'       => 5,
-        ],
-        [
-            'id'           => 'team_members',
-            'label'        => 'Team Members',
-            'type'         => 'repeater',
-            'button_label' => 'Add Member',
-            'max'          => 8,
-            'fields'       => [
-                ['id' => 'name',   'label' => 'Name',  'type' => 'text',  'width' => '50'],
-                ['id' => 'role',   'label' => 'Role',  'type' => 'text',  'width' => '50'],
-                ['id' => 'bio',    'label' => 'Bio',   'type' => 'textarea'],
-                ['id' => 'avatar', 'label' => 'Photo', 'type' => 'image', 'width' => '50'],
-            ],
-        ],
-    ],
-]);
-```
-
-### Retrieving data
-
-```php
-// In a MetaBlock's getData() method:
-$this->getMeta($postId, 'hero_heading');              // string
-$this->getImageUrl($postId, 'hero_image', 'large');   // image URL string
-
-// Static helpers — usable anywhere:
-Metabox::get($postId, 'hero_heading');                // raw meta value
-Metabox::get_bool($postId, 'show_cta');               // bool — for checkbox/toggle fields
-Metabox::get_color($postId, 'hero_bg_color', '#fff'); // string with fallback
-Metabox::get_image_url($postId, 'hero_image');        // image URL string
-Metabox::get_posts($postId, 'featured_post');         // int[] — works for single or multi post_select
-Metabox::get_repeater($postId, 'team_members');       // array[] — each element is an assoc row array
-```
-
-Example — looping a repeater:
-
-```php
-$team = Metabox::get_repeater($post->ID, 'team_members');
-foreach ($team as $member) {
-    echo '<h3>' . esc_html($member['name'] ?? '') . '</h3>';
-    echo '<p>'  . esc_html($member['role'] ?? '') . '</p>';
-}
-```
-
-All meta keys are stored as `_taw_{field_id}` by default.
-
----
-
-## Vite Integration
-
-### How it works
-
-`inc/vite-loader.php` checks whether the Vite dev server is running on port 5173:
-
-- **Dev mode:** Assets served directly from Vite with HMR. Styles update instantly, JS hot-reloads, PHP changes trigger a full page refresh.
-- **Production:** Reads `public/build/manifest.json` and enqueues hashed, minified files.
-
-### CSS loading pipeline
-
-Production CSS loads in three non-blocking layers:
-
-1. **Critical CSS** (`critical.scss`) — compiled and inlined as a `<style>` tag in `<head>`. Zero network requests. Keep it under ~14 KB (first TCP round-trip). No `@font-face` here.
-2. **Main CSS** (from `app.js`) — preloaded with `<link rel="preload">` then loaded asynchronously via `media="print" onload="this.media='all'"`. Non-render-blocking.
-3. **Block CSS** — per-block stylesheets, enqueued only on pages that render each block.
-
-### What gets compiled
-
-| Entry point | Purpose |
-|---|---|
-| `resources/js/app.js` | Main entry — Alpine.js + imports Tailwind CSS (`app.css`) + custom SCSS (`app.scss`) |
-| `resources/scss/critical.scss` | Above-the-fold CSS — standalone entry, inlined in `<head>` |
-| `inc/Blocks/*/style.css` | Per-block styles (auto-discovered) |
-| `inc/Blocks/*/style.scss` | Per-block SCSS (auto-discovered) |
-| `inc/Blocks/*/script.js` | Per-block scripts (auto-discovered) |
-
-`resources/css/app.css` (Tailwind) and `resources/scss/app.scss` (custom SCSS) are **imported by `app.js`**, not standalone Vite entries. Block assets are auto-discovered by `vite.config.js` at build time — adding a `style.css` or `script.js` to a block folder is all you need.
-
----
-
-## Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| [Tailwind CSS v4](https://tailwindcss.com/) | Utility-first CSS via `@tailwindcss/vite` |
-| [Alpine.js v3](https://alpinejs.dev/) | Lightweight JS reactivity for interactive components |
-| [Vite v7](https://vitejs.dev/) | Build tool + HMR dev server |
-| [SCSS](https://sass-lang.com/) | Optional custom styles (global and per-block) |
-
-### PHP Architecture
-
-| Concept | Implementation |
-|---|---|
-| Autoloading | PSR-4 via Composer (`TAW\` → `inc/`) |
-| Blocks | Custom class hierarchy (`BaseBlock` → `MetaBlock` / `Block`) |
-| Metaboxes | Bespoke framework (`inc/Core/Metabox.php`) |
-| Asset pipeline | `inc/vite-loader.php` + `BlockRegistry` queue system |
 
 ---
 
 ## Template Patterns
 
-### Homepage with multiple sections
+### Multi-section homepage
 
 ```php
 <?php
@@ -571,27 +161,11 @@ get_header();
 <?php get_footer(); ?>
 ```
 
-### Nesting UI blocks inside MetaBlocks
-
-```php
-<!-- inc/Blocks/Hero/index.php -->
-<section class="hero">
-    <h1><?php echo esc_html($heading); ?></h1>
-
-    <?php if ($cta_text): ?>
-        <?php (new \TAW\Blocks\Button\Button())->render([
-            'text' => $cta_text,
-            'url'  => $cta_url,
-        ]); ?>
-    <?php endif; ?>
-</section>
-```
-
-### Minimal page with no custom blocks
+### Standard page (no custom blocks)
 
 ```php
 <?php
-// page.php — no queue() needed if no blocks are used
+// page.php
 get_header();
 ?>
 
@@ -604,12 +178,98 @@ get_header();
 
 ---
 
+## Tech Stack
+
+| Technology | Role |
+|---|---|
+| [Tailwind CSS v4](https://tailwindcss.com/) | Utility-first CSS via the official Vite plugin |
+| [Alpine.js v3](https://alpinejs.dev/) | Lightweight reactivity for interactive components |
+| [Vite v7](https://vitejs.dev/) | Build tool with instant HMR in development |
+| [SCSS](https://sass-lang.com/) | Optional custom styles — global and per-block |
+| PHP 7.4+ | PSR-4 autoloading via Composer |
+
+### Architecture at a Glance
+
+| Concept | Implementation |
+|---|---|
+| Autoloading | PSR-4 via Composer (`TAW\` → `inc/`) |
+| Block system | `BaseBlock` → `MetaBlock` / `Block` class hierarchy |
+| Metaboxes | Bespoke config-driven framework (`inc/Core/Metabox.php`) |
+| Asset pipeline | `inc/vite-loader.php` + `BlockRegistry` queue system |
+| Critical CSS | `critical.scss` compiled and inlined in `<head>` |
+| Fonts | Self-hosted WOFF2 with preloads via `inc/performance.php` |
+
+---
+
+## Project Structure
+
+```
+taw-theme/
+├── inc/
+│   ├── Core/                  # Framework internals (namespace TAW\Core)
+│   │   ├── BaseBlock.php      #   Abstract base — asset loading, template rendering
+│   │   ├── MetaBlock.php      #   Data-owning blocks (metaboxes + post_meta)
+│   │   ├── Block.php          #   Presentational blocks (receives props)
+│   │   ├── BlockRegistry.php  #   Static registry — queue, enqueue, render
+│   │   ├── BlockLoader.php    #   Auto-discovers blocks by scanning inc/Blocks/
+│   │   └── Metabox.php        #   Config-driven metabox framework
+│   ├── Blocks/                # One folder per block — auto-discovered
+│   ├── vite-loader.php        # Vite ↔ WordPress bridge
+│   └── performance.php        # Resource hints, preloads, WP bloat removal
+├── resources/
+│   ├── css/app.css            # Tailwind v4 directives
+│   ├── scss/
+│   │   ├── app.scss           # Global custom SCSS
+│   │   ├── critical.scss      # Above-the-fold CSS (inlined in <head>)
+│   │   └── _fonts.scss        # @font-face declarations
+│   ├── fonts/                 # Self-hosted WOFF2 files
+│   └── js/app.js              # Alpine.js + global JS entry point
+├── public/build/              # Compiled assets (gitignored)
+├── functions.php              # Theme bootstrap (minimal)
+├── vite.config.js             # Vite configuration
+├── composer.json              # PHP deps + PSR-4 autoloading
+├── package.json               # Node deps + scripts
+└── AGENTS.md                  # AI agent architecture docs
+```
+
+---
+
+## Requirements
+
+| Dependency | Version |
+|---|---|
+| WordPress | 6.0+ |
+| PHP | 7.4+ |
+| Composer | 2.0+ |
+| Node.js | 20.19+ |
+| npm | 8+ |
+
+---
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start Vite dev server (port 5173) with HMR |
+| `npm run build` | Production build → `public/build/` with hashed filenames |
+| `composer install` | Install PHP dependencies |
+| `composer dump-autoload` | Rebuild PSR-4 classmap after adding new classes |
+
+---
+
 ## AI-Friendly
 
-This repo includes an `AGENTS.md` file at root with comprehensive architecture documentation for AI coding assistants. Any LLM-powered tool (Claude Code, Cursor, Copilot, Windsurf) will automatically pick up the project's conventions and patterns.
+This repo ships with architecture documentation for AI coding assistants:
+
+- **`AGENTS.md`** — comprehensive architecture guide (Claude Code, Cursor, generic agents)
+- **`CLAUDE.md`** — Claude Code-specific instructions
+- **`.github/copilot-instructions.md`** — GitHub Copilot instructions
+- **`.windsurfrules`** — Windsurf/Codeium instructions
+
+Any LLM-powered tool will automatically pick up the project's conventions, naming patterns, and anti-patterns. Point your AI at the repo and start building.
 
 ---
 
 ## License
 
-MIT License. See LICENSE.txt for details.
+GPL v2. See [LICENSE.txt](LICENSE.txt) for details.
