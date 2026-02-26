@@ -20,6 +20,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/scss/app.scss',
+                'resources/scss/critical.scss',
                 'resources/js/app.js',
                 ...componentAssets,
             ],

@@ -20,43 +20,57 @@ function vite_enqueue_theme_assets()
     $manifest_path = get_theme_file_path('/public/build/manifest.json');
 
     if ($is_dev) {
-        // DEV MODE - Vite client must load first for HMR
+        // DEV MODE — unchanged, Vite HMR handles everything
         wp_enqueue_script('vite-client', VITE_SERVER . '/@vite/client', [], null, false);
-
-        // Tailwind CSS entry (HMR handled by @tailwindcss/vite)
-        wp_enqueue_style('tailwind', VITE_SERVER . '/resources/css/app.css', [], null);
-
-        // Load JS entry point (which imports SCSS, so HMR works for styles too)
         wp_enqueue_script('theme-app', VITE_SERVER . '/' . VITE_ENTRY_POINT, ['vite-client'], null, false);
-
-        // Note: Don't enqueue SCSS separately in dev - let JS handle it for HMR to work
     } elseif (file_exists($manifest_path)) {
-        // PRODUCTION MODE
         $manifest = json_decode(file_get_contents($manifest_path), true);
 
-        // 1. JS
-        if (isset($manifest['resources/js/app.js'])) {
-            $js_file = $manifest['resources/js/app.js']['file'];
-            wp_enqueue_script('theme-app', get_theme_file_uri('/public/build/' . $js_file), [], null, true);
-        }
+        // 1. Critical CSS — inlined in <head>, no network request
+        vite_inline_critical_css();
 
-        // 2. CSS (Vite extracts CSS imported in JS to the entry chunk)
+        // 2. Full CSS — loaded asynchronously (non-render-blocking)
+        //    We collect all CSS URLs and output them manually because
+        //    wp_enqueue_style() always creates render-blocking <link> tags.
+        $async_css_urls = [];
+
+        // CSS extracted from JS entry
         if (isset($manifest['resources/js/app.js']['css'])) {
             foreach ($manifest['resources/js/app.js']['css'] as $css_file) {
-                wp_enqueue_style('theme-styles', get_theme_file_uri('/public/build/' . $css_file), [], null);
+                $async_css_urls[] = get_theme_file_uri('/public/build/' . $css_file);
             }
         }
 
-        // 3. Tailwind CSS entry
-        if (isset($manifest['resources/css/app.css'])) {
-            $css_file = $manifest['resources/css/app.css']['file'];
-            wp_enqueue_style('tailwind', get_theme_file_uri('/public/build/' . $css_file), [], null);
+        // Standalone SCSS entry
+        if (isset($manifest['resources/scss/app.scss']['file'])) {
+            $async_css_urls[] = get_theme_file_uri(
+                '/public/build/' . $manifest['resources/scss/app.scss']['file']
+            );
         }
 
-        // 4. Standalone SCSS (custom theme styles)
-        if (isset($manifest['resources/scss/app.scss'])) {
-            $css_file = $manifest['resources/scss/app.scss']['file'];
-            wp_enqueue_style('theme-main-css', get_theme_file_uri('/public/build/' . $css_file), [], null);
+        // Deduplicate
+        $async_css_urls = array_unique($async_css_urls);
+
+        // Output async CSS links — we hook into wp_head so they appear
+        // in the right place, after critical CSS
+        add_action('wp_head', function () use ($async_css_urls) {
+            foreach ($async_css_urls as $url) {
+                printf(
+                    '<link rel="stylesheet" href="%s" media="print" onload="this.media=\'all\'">' . "\n",
+                    esc_url($url)
+                );
+                // Fallback for users with JavaScript disabled
+                printf(
+                    '<noscript><link rel="stylesheet" href="%s"></noscript>' . "\n",
+                    esc_url($url)
+                );
+            }
+        }, 50);
+
+        // 3. JS — modules are deferred by default, no changes needed
+        if (isset($manifest['resources/js/app.js'])) {
+            $js_file = $manifest['resources/js/app.js']['file'];
+            wp_enqueue_script('theme-app', get_theme_file_uri('/public/build/' . $js_file), [], null, true);
         }
     }
 }
@@ -76,25 +90,17 @@ function vite_enqueue_theme_assets()
  */
 function vite_preload_assets()
 {
-    if (vite_is_dev()) {
-        return;
-    }
+    if (vite_is_dev()) return;
 
     $manifest_path = get_theme_file_path('/public/build/manifest.json');
-
-    if (!file_exists($manifest_path)) {
-        return;
-    }
+    if (!file_exists($manifest_path)) return;
 
     $manifest = json_decode(file_get_contents($manifest_path), true);
-    $preloaded = []; // Track URLs to prevent duplicates
+    $preloaded = [];
 
-    // Helper: emit a preload tag only if we haven't already
     $emit = function (string $file, string $type) use (&$preloaded) {
         $url = get_theme_file_uri('/public/build/' . $file);
-        if (isset($preloaded[$url])) {
-            return;
-        }
+        if (isset($preloaded[$url])) return;
         $preloaded[$url] = true;
 
         if ($type === 'module') {
@@ -104,27 +110,23 @@ function vite_preload_assets()
         }
     };
 
-    // 1. Preload the main JS bundle
+    // JS bundle
     if (isset($manifest['resources/js/app.js']['file'])) {
         $emit($manifest['resources/js/app.js']['file'], 'module');
     }
 
-    // 2. Preload Tailwind CSS (your biggest stylesheet)
-    if (isset($manifest['resources/css/app.css']['file'])) {
-        $emit($manifest['resources/css/app.css']['file'], 'style');
-    }
-
-    // 3. Preload CSS files extracted from JS entry (SCSS imported in app.js)
+    // Main CSS files (preload so they download early despite media="print")
     if (isset($manifest['resources/js/app.js']['css'])) {
         foreach ($manifest['resources/js/app.js']['css'] as $css_file) {
             $emit($css_file, 'style');
         }
     }
 
-    // 4. Preload standalone SCSS entry (deduplicated — skipped if already emitted above)
     if (isset($manifest['resources/scss/app.scss']['file'])) {
         $emit($manifest['resources/scss/app.scss']['file'], 'style');
     }
+
+    // NOTE: critical.scss is NOT preloaded — it's inlined, no request needed
 }
 
 add_action('wp_head', 'vite_preload_assets', 2);
@@ -187,4 +189,43 @@ function vite_asset_url(string $path): string
 
     // Otherwise, serve the file directly from the theme directory
     return get_theme_file_uri('/' . ltrim($path, '/'));
+}
+
+/**
+ * Inline critical CSS directly into <head>.
+ *
+ * Reads the compiled critical CSS file and outputs it in a <style> tag.
+ * This eliminates the network request — the CSS arrives with the HTML
+ * itself, so the browser can paint the above-the-fold content immediately.
+ *
+ * In dev mode, we skip inlining because Vite's HMR handles everything.
+ */
+function vite_inline_critical_css(): void
+{
+    if (vite_is_dev()) {
+        return; // Vite HMR handles styles in dev
+    }
+
+    $manifest_path = get_theme_file_path('/public/build/manifest.json');
+    if (!file_exists($manifest_path)) {
+        return;
+    }
+
+    $manifest = json_decode(file_get_contents($manifest_path), true);
+
+    // Look up the compiled critical CSS in the manifest
+    $critical_key = 'resources/scss/critical.scss';
+    if (!isset($manifest[$critical_key]['file'])) {
+        return;
+    }
+
+    $css_file = get_theme_file_path('/public/build/' . $manifest[$critical_key]['file']);
+    if (!file_exists($css_file)) {
+        return;
+    }
+
+    $css = file_get_contents($css_file);
+    if ($css) {
+        echo '<style id="critical-css">' . $css . '</style>' . "\n";
+    }
 }
