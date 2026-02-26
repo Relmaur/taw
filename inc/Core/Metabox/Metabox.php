@@ -36,7 +36,9 @@ class Metabox
     private array  $fields;
     private array $tabs;
     private string $icon;
+    private static bool $color_script_enqueued = false;
     private static bool $post_selector_script_enqueued = false;
+    private static bool $repeater_script_enqueued = false;
 
 
     /** @var callable|null Callback to conditionally show the metabox. Receives WP_Post. */
@@ -151,6 +153,36 @@ class Metabox
         if ($has_post_select) {
             $this->enqueue_post_selector_script();
         }
+
+        $has_repeater = array_filter($this->fields, fn($f) => ($f['type'] ?? '') === 'repeater');
+
+        if ($has_repeater) {
+            $this->enqueue_repeater_script();
+
+            // Repeater sub-fields might need their own assets
+            foreach ($this->fields as $field) {
+                if (($field['type'] ?? '') !== 'repeater') continue;
+                $sub_fields = $field['fields'] ?? [];
+
+                $sub_has_image = array_filter($sub_fields, fn($f) => ($f['type'] ?? '') === 'image');
+                if ($sub_has_image) {
+                    wp_enqueue_media();
+                    $this->enqueue_image_script();
+                }
+
+                $sub_has_color = array_filter($sub_fields, fn($f) => ($f['type'] ?? '') === 'color');
+                if ($sub_has_color) {
+                    wp_enqueue_style('wp-color-picker');
+                    wp_enqueue_script('wp-color-picker');
+                    $this->enqueue_color_script();
+                }
+
+                $sub_has_post_select = array_filter($sub_fields, fn($f) => ($f['type'] ?? '') === 'post_select');
+                if ($sub_has_post_select) {
+                    $this->enqueue_post_selector_script();
+                }
+            }
+        }
     }
 
     /**
@@ -196,7 +228,7 @@ class Metabox
                             var url = attachment.sizes && attachment.sizes.medium ?
                                 attachment.sizes.medium.url :
                                 attachment.url;
-                            $input.val(attachment.id);
+                            $input.val(attachment.id).trigger('change');
                             $preview.html(
                                 '<img src="' + url + '" style="max-width:300px;height:auto;display:block;border:1px solid #ddd;padding:4px;border-radius:4px;">'
                             );
@@ -210,7 +242,7 @@ class Metabox
                     $(document.body).on('click', '.taw-remove-image', function(e) {
                         e.preventDefault();
                         var $wrapper = $(this).closest('.taw-image-field');
-                        $wrapper.find('.taw-image-input').val('');
+                        $wrapper.find('.taw-image-input').val('').trigger('change');
                         $wrapper.find('.taw-image-preview').html('');
                         $(this).hide();
                     });
@@ -219,8 +251,6 @@ class Metabox
         <?php
         });
     }
-
-    private static bool $color_script_enqueued = false;
 
     private function enqueue_color_script(): void
     {
@@ -265,20 +295,6 @@ class Metabox
             </script>
         <?php
         });
-    }
-
-    public function enqueue_assets(): void
-    {
-        if (self::$assets_enqueued) {
-            return;
-        }
-
-        self::$assets_enqueued = true;
-
-        // Enqueue additional CSS/JS on the admin for custom styling and functionality for the metaboxes
-        // add_action('admin_enqueue_scripts', function () {
-        //     wp_enqueue_style('taw-metaboxes', get_template_directory_uri() . '/inc/metaboxes/metaboxes.css', [], '1.0');
-        // });
     }
 
     private function enqueue_post_selector_script(): void
@@ -541,6 +557,233 @@ class Metabox
         });
     }
 
+    private function enqueue_repeater_script(): void
+    {
+        if (self::$repeater_script_enqueued) {
+            return;
+        }
+
+        self::$repeater_script_enqueued = true;
+
+        // We need jQuery UI Sortable for drag-and-drop reordering
+        wp_enqueue_script('jquery-ui-sortable');
+
+        add_action('admin_footer', static function () {
+        ?>
+            <script>
+                (function($) {
+                    'use strict';
+
+                    $(document).ready(function() {
+
+                        $('.taw-repeater').each(function() {
+                            var $repeater = $(this);
+
+                            // Skip if already initialized
+                            if ($repeater.data('taw-repeater-init')) return;
+                            $repeater.data('taw-repeater-init', true);
+
+                            var $input = $repeater.find('> .taw-repeater-input');
+                            var $rows = $repeater.find('> .taw-repeater-rows');
+                            var $addBtn = $repeater.find('> .taw-repeater-add');
+                            var template = $repeater.find('> .taw-repeater-template').html();
+                            var max = parseInt($repeater.data('max'), 10) || 0;
+                            var min = parseInt($repeater.data('min'), 10) || 0;
+
+                            // Counter for unique indexes — uses timestamp to avoid
+                            // collisions with existing rows after add/remove cycles
+                            var nextIndex = Date.now();
+
+                            // --- Add Row ---
+
+                            $addBtn.on('click', function() {
+                                if (max > 0 && $rows.children('.taw-repeater-row').length >= max) {
+                                    return;
+                                }
+
+                                var newIndex = nextIndex++;
+                                var rowHtml = template.replace(/__INDEX__/g, newIndex);
+                                var $row = $(rowHtml);
+
+                                $rows.append($row);
+
+                                // Initialize any JS-dependent fields in the new row
+                                initFieldsInRow($row);
+
+                                updateNumbers();
+                                updateButtonState();
+                                serialize();
+                            });
+
+                            // --- Remove Row ---
+
+                            $rows.on('click', '.taw-repeater-row-remove', function(e) {
+                                e.preventDefault();
+                                var $row = $(this).closest('.taw-repeater-row');
+                                var count = $rows.children('.taw-repeater-row').length;
+
+                                if (min > 0 && count <= min) return;
+
+                                $row.slideUp(200, function() {
+                                    $row.remove();
+                                    updateNumbers();
+                                    updateButtonState();
+                                    serialize();
+                                });
+                            });
+
+                            // --- Collapse/Expand Row ---
+
+                            $rows.on('click', '.taw-repeater-row-toggle', function(e) {
+                                e.preventDefault();
+                                var $row = $(this).closest('.taw-repeater-row');
+                                var $content = $row.find('> .taw-repeater-row-content');
+                                $content.slideToggle(150);
+                                $(this).text($content.is(':visible') ? '▾' : '▸');
+                            });
+
+                            // --- Sortable ---
+
+                            $rows.sortable({
+                                handle: '.taw-repeater-row-drag',
+                                axis: 'y',
+                                placeholder: 'taw-repeater-row-placeholder',
+                                tolerance: 'pointer',
+                                start: function(e, ui) {
+                                    ui.placeholder.height(ui.item.outerHeight());
+                                },
+                                update: function() {
+                                    updateNumbers();
+                                    serialize();
+                                }
+                            });
+
+                            // --- Initialize JS fields in a row ---
+
+                            function initFieldsInRow($row) {
+                                // Color pickers
+                                if (typeof window.tawInitColorPickers === 'function') {
+                                    window.tawInitColorPickers($row[0]);
+                                }
+
+                                // Post selectors
+                                if (typeof window.tawInitPostSelectors === 'function') {
+                                    window.tawInitPostSelectors($row[0]);
+                                }
+
+                                // Image fields work via event delegation (no init needed)
+                                // Text, textarea, select, number, range, checkbox — plain HTML, no init needed
+                            }
+
+                            // --- Update row numbers ---
+
+                            function updateNumbers() {
+                                $rows.children('.taw-repeater-row').each(function(i) {
+                                    $(this).find('> .taw-repeater-row-header .taw-repeater-row-title').text('#' + (i + 1));
+                                });
+                            }
+
+                            // --- Update add button state ---
+
+                            function updateButtonState() {
+                                var count = $rows.children('.taw-repeater-row').length;
+
+                                if (max > 0 && count >= max) {
+                                    $addBtn.prop('disabled', true);
+                                } else {
+                                    $addBtn.prop('disabled', false);
+                                }
+                            }
+
+                            // --- Serialize all rows into the hidden input ---
+
+                            function serialize() {
+                                var data = [];
+
+                                $rows.children('.taw-repeater-row').each(function() {
+                                    var $row = $(this);
+                                    var rowData = {};
+
+                                    // Find all inputs/selects/textareas within this row
+                                    $row.find('input, select, textarea').each(function() {
+                                        var $el = $(this);
+                                        var name = $el.attr('name');
+                                        if (!name) return;
+
+                                        // Parse the sub-field ID from the name
+                                        // Format: taw_repeater[_taw_something][INDEX][sub_field_id]
+                                        var match = name.match(/\[[^\]]+\]\[([^\]]+)\]$/);
+                                        if (!match) return;
+
+                                        var subKey = match[1];
+
+                                        // Handle checkboxes: hidden + checkbox share the same name.
+                                        // The checkbox overwrites the hidden field's "0" with "1".
+                                        if ($el.attr('type') === 'checkbox') {
+                                            rowData[subKey] = $el.is(':checked') ? '1' : '0';
+                                            return;
+                                        }
+
+                                        // Skip hidden fields that are paired with checkboxes
+                                        if ($el.attr('type') === 'hidden') {
+                                            // Check if there's a checkbox with the same name
+                                            var $checkbox = $row.find('input[type="checkbox"][name="' + name + '"]');
+                                            if ($checkbox.length) return; // Checkbox handler above will handle it
+                                        }
+
+                                        rowData[subKey] = $el.val();
+                                    });
+
+                                    if (Object.keys(rowData).length) {
+                                        data.push(rowData);
+                                    }
+                                });
+
+                                $input.val(JSON.stringify(data));
+                            }
+
+                            // --- Listen for changes to serialize ---
+
+                            $rows.on('change input', 'input, select, textarea', debounce(function() {
+                                serialize();
+                            }, 200));
+
+                            // Initialize button state on load
+                            updateButtonState();
+                        });
+
+                        // Reuse the debounce helper (or define it if not already present)
+                        function debounce(fn, wait) {
+                            var timer;
+                            return function() {
+                                var context = this,
+                                    args = arguments;
+                                clearTimeout(timer);
+                                timer = setTimeout(function() {
+                                    fn.apply(context, args);
+                                }, wait);
+                            };
+                        }
+                    });
+                })(jQuery);
+            </script>
+        <?php
+        });
+    }
+
+    public function enqueue_assets(): void
+    {
+        if (self::$assets_enqueued) {
+            return;
+        }
+
+        self::$assets_enqueued = true;
+
+        // Enqueue additional CSS/JS on the admin for custom styling and functionality for the metaboxes
+        // add_action('admin_enqueue_scripts', function () {
+        //     wp_enqueue_style('taw-metaboxes', get_template_directory_uri() . '/inc/metaboxes/metaboxes.css', [], '1.0');
+        // });
+    }
 
     /* -------------------------------------------------------------------------
      * Render
@@ -831,6 +1074,56 @@ class Metabox
                 </div>
             <?php
                 break;
+
+            /* ---- MARK: Repeater ---- */
+            case 'repeater':
+                $sub_fields  = $field['fields'] ?? [];
+                $max_rows    = $field['max'] ?? 0;      // 0 = unlimited
+                $min_rows    = $field['min'] ?? 0;
+                $button_label = $field['button_label'] ?? 'Add Row';
+
+                // Decode saved rows
+                $rows = $value ? json_decode($value, true) : [];
+                if (!is_array($rows)) $rows = [];
+            ?>
+                <div class="taw-repeater"
+                    data-field-id="<?php echo esc_attr($field_id); ?>"
+                    data-max="<?php echo intval($max_rows); ?>"
+                    data-min="<?php echo intval($min_rows); ?>">
+
+                    <?php // Hidden input holds the serialized JSON value 
+                    ?>
+                    <input type="hidden"
+                        class="taw-repeater-input"
+                        id="<?php echo esc_attr($field_id); ?>"
+                        name="<?php echo esc_attr($field_id); ?>"
+                        value="<?php echo esc_attr($value ?: '[]'); ?>">
+
+                    <?php // Sortable container for rows 
+                    ?>
+                    <div class="taw-repeater-rows">
+                        <?php foreach ($rows as $row_index => $row_data):
+                            $this->render_repeater_row($sub_fields, $field_id, $row_index, $row_data, $post_id);
+                        endforeach; ?>
+                    </div>
+
+                    <?php // "Add Row" button 
+                    ?>
+                    <button type="button" class="button taw-repeater-add">
+                        <?php echo esc_html($button_label); ?>
+                    </button>
+
+                    <?php // Template row — hidden, cloned by JS when adding new rows.
+                    // We use a <script type="text/html"> tag so the browser
+                    // doesn't parse it as real DOM (no accidental form submissions
+                    // or JS initializations on the template). 
+                    ?>
+                    <script type="text/html" class="taw-repeater-template">
+                        <?php $this->render_repeater_row($sub_fields, $field_id, '__INDEX__', [], $post_id); ?>
+                    </script>
+                </div>
+            <?php
+                break;
         }
     }
 
@@ -915,7 +1208,58 @@ class Metabox
                 <?php endforeach; ?>
             </div>
         </div>
-<?php }
+    <?php }
+
+    /**
+     * Render a single repeater row.
+     * Used both for saved rows (with data) and the template row (empty).
+     */
+    private function render_repeater_row(array $sub_fields, string $field_id, int|string $index, array $row_data, ?int $post_id): void
+    {
+    ?>
+        <div class="taw-repeater-row" data-index="<?php echo esc_attr((string) $index); ?>">
+            <div class="taw-repeater-row-header">
+                <span class="taw-repeater-row-drag" title="Drag to reorder">☰</span>
+                <span class="taw-repeater-row-title">
+                    <?php echo esc_html('#' . (is_int($index) ? $index + 1 : '')); ?>
+                </span>
+                <button type="button" class="taw-repeater-row-toggle" title="Collapse">▾</button>
+                <button type="button" class="taw-repeater-row-remove" title="Remove row">&times;</button>
+            </div>
+            <div class="taw-repeater-row-content">
+                <div class="fields-container">
+                    <?php foreach ($sub_fields as $sub_field):
+                        $sub_id   = $sub_field['id'];
+                        $sub_value = $row_data[$sub_id] ?? '';
+                        $width    = ($sub_field['width'] ?? '100') . '%';
+
+                        // Build a unique name for serialization.
+                        // Format: taw_repeater[field_id][INDEX][sub_field_id]
+                        // JS reads these to build the JSON before submit.
+                        $input_name = 'taw_repeater[' . $field_id . '][' . $index . '][' . $sub_id . ']';
+                    ?>
+                        <div class="field" style="--width: <?php echo esc_attr($width); ?>;">
+                            <div class="field-and-label">
+                                <label class="field-label">
+                                    <?php echo esc_html($sub_field['label'] ?? ''); ?>
+                                </label>
+                                <?php
+                                // We render the sub-field using the SAME render_field()
+                                // method, but with a special name for repeater context.
+                                // We temporarily override the field_id for rendering.
+                                $this->render_field($sub_field, $input_name, $sub_value, $post_id);
+                                ?>
+                            </div>
+                            <?php if (!empty($sub_field['description'])): ?>
+                                <p class="description"><?php echo esc_html($sub_field['description']); ?></p>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+<?php
+    }
 
     /* -------------------------------------------------------------------------
      * Save
@@ -1002,6 +1346,7 @@ class Metabox
             'range'          => floatval($value),
             'color'          => sanitize_hex_color($value) ?: '',
             'post_select'       => $this->sanitize_post_select($field, $value),
+            'repeater'          => $this->sanitize_repeater($field, $value),
             default          => sanitize_text_field($value),
         };
     }
@@ -1037,6 +1382,55 @@ class Metabox
         }
 
         return wp_json_encode($clean);
+    }
+
+    /**
+     * Sanitize repeater value.
+     * Decodes JSON, sanitizes each sub-field in each row,
+     * then re-encodes as clean JSON.
+     */
+    private function sanitize_repeater(array $field, mixed $value): string
+    {
+        $rows = json_decode(wp_unslash($value), true);
+        if (!is_array($rows)) {
+            return '[]';
+        }
+
+        $sub_fields = $field['fields'] ?? [];
+        $max = $field['max'] ?? 0;
+
+        // Enforce max rows
+        if ($max > 0) {
+            $rows = array_slice($rows, 0, $max);
+        }
+
+        // Build a lookup of sub-field definitions by ID
+        $field_map = [];
+        foreach ($sub_fields as $sf) {
+            $field_map[$sf['id']] = $sf;
+        }
+
+        $clean_rows = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) continue;
+
+            $clean_row = [];
+            foreach ($row as $key => $val) {
+                // Only allow known sub-field keys
+                if (!isset($field_map[$key])) continue;
+
+                // Reuse existing sanitize_field() for each sub-field
+                $clean_row[$key] = $this->sanitize_field($field_map[$key], $val);
+            }
+
+            // Only keep rows that have at least one non-empty value
+            $has_content = array_filter($clean_row, fn($v) => $v !== '' && $v !== '0' && $v !== '[]');
+            if (!empty($has_content)) {
+                $clean_rows[] = $clean_row;
+            }
+        }
+
+        return wp_json_encode($clean_rows);
     }
 
     /* -------------------------------------------------------------------------
@@ -1147,5 +1541,31 @@ class Metabox
         // Fall back to single ID
         $id = absint($raw);
         return $id ? [$id] : [];
+    }
+
+    /**
+     * Retrieve repeater data as an array of associative arrays.
+     * 
+     * Usage:
+     * $team = Metabox::get_repeater($post->ID, 'team_members');
+     * foreach($team as $member) {
+     *  echo '<div class="team-card">';
+     *  echo '<h3>' . esc_html($member['name'] ?? '') . '</h3>';
+     *  echo '<p>' . esc_html($member['role'] ?? '') . '</p>';
+     *  echo '</div>';
+     * }
+     *
+     * @param int    $post_id  The post/page ID.
+     * @param string $field_id Field ID (without prefix).
+     * @param string $prefix   Meta key prefix. Default '_taw_'.
+     * @return array[] Array of rows, each row is an associative array.
+     */
+    public static function get_repeater(int $post_id, string $field_id, string $prefix = '_taw_'): array
+    {
+        $raw = get_post_meta($post_id, $prefix . $field_id, true);
+        if (empty($raw)) return [];
+
+        $rows = json_decode($raw, true);
+        return is_array($rows) ? $rows : [];
     }
 }

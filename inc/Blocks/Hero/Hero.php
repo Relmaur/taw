@@ -81,6 +81,42 @@ class Hero extends MetaBlock
                     'description' => 'Select up to 5 related posts.',
                     'width'       => '50'
                 ],
+                [
+                    'id'           => 'team_members',
+                    'label'        => 'Team Members',
+                    'type'         => 'repeater',
+                    'button_label' => 'Add Team Member',
+                    'max'          => 8,
+                    'fields'       => [
+                        [
+                            'id'          => 'name',
+                            'label'       => 'Name',
+                            'type'        => 'text',
+                            'placeholder' => 'Full name',
+                            'width'       => '50',
+                        ],
+                        [
+                            'id'          => 'role',
+                            'label'       => 'Role',
+                            'type'        => 'text',
+                            'placeholder' => 'e.g. Designer, Developer',
+                            'width'       => '50',
+                        ],
+                        [
+                            'id'    => 'bio',
+                            'label' => 'Bio',
+                            'type'  => 'textarea',
+                            'rows'  => 3,
+                        ],
+                        [
+                            'id'    => 'avatar',
+                            'label' => 'Photo',
+                            'type'  => 'image',
+                            'width' => '50',
+                        ],
+                    ],
+                    'description' => 'Add your team members. Drag to reorder.',
+                ],
             ],
         ]);
     }
