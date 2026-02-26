@@ -386,27 +386,34 @@ if (empty($label)) return;
 
 ## The Metabox Framework
 
-The theme includes a bespoke, configuration-driven metabox framework at `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). No plugins needed.
+The theme includes a bespoke, configuration-driven metabox framework at `inc/Core/Metabox/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). No plugins needed.
 
 ### Supported field types
 
-| Type | Description |
-|------|-------------|
-| `text` | Single-line text input |
-| `textarea` | Multi-line text (supports `rows` option) |
-| `wysiwyg` | WordPress rich text editor |
-| `url` | URL input with validation |
-| `number` | Numeric input (supports `min`, `max`, `step`) |
-| `select` | Dropdown (provide `options` array) |
-| `image` | WordPress media picker |
-| `group` | Nested field group (e.g., CTA with text + URL) |
+| Type | Description | Notable options |
+|------|-------------|-----------------|
+| `text` | Single-line text input | `placeholder` |
+| `textarea` | Multi-line text | `rows`, `placeholder` |
+| `wysiwyg` | WordPress rich text editor | `rows`, `media_buttons`, `teeny` |
+| `url` | URL input | `placeholder` |
+| `number` | Numeric input | `min`, `max`, `step`, `placeholder` |
+| `select` | Dropdown | `options` (assoc array of value → label) |
+| `checkbox` | Toggle switch (stores `'1'` / `'0'`) | — |
+| `color` | WordPress color picker | `default` |
+| `range` | Slider with live value display | `min`, `max`, `step`, `unit`, `default` |
+| `image` | WordPress media picker (stores attachment ID) | — |
+| `post_select` | Searchable post picker, single or multi | `post_type`, `multiple`, `max` |
+| `repeater` | Sortable rows of sub-fields | `fields`, `min`, `max`, `button_label` |
+| `group` | Inline group of sub-fields (no rows) | `fields` |
 
 ### Features
 
 - **Tabs** — Group fields into tabbed sections with optional icons
 - **Conditional display** — `show_on` callback to show metabox only on specific pages
-- **Field widths** — `'width' => '50'` for side-by-side layout
+- **Field widths** — `'width' => '50'` for side-by-side layout (any percentage)
 - **Code sanitization** — `'sanitize' => 'code'` preserves raw HTML/code for trusted users
+- **Repeater drag-and-drop** — rows are sortable via jQuery UI; order is preserved on save
+- **Post selector** — live REST search with thumbnail previews; supports single or multi-select with a max cap
 
 ### Configuration example
 
@@ -421,12 +428,42 @@ new Metabox([
     },
     'tabs' => [
         ['id' => 'content', 'label' => 'Content', 'fields' => ['hero_heading', 'hero_tagline']],
-        ['id' => 'style',   'label' => 'Style',   'fields' => ['hero_image']],
+        ['id' => 'style',   'label' => 'Style',   'fields' => ['hero_bg_color', 'hero_padding']],
     ],
     'fields' => [
-        ['id' => 'hero_heading', 'label' => 'Heading', 'type' => 'text', 'width' => '50'],
-        ['id' => 'hero_tagline', 'label' => 'Tagline', 'type' => 'text', 'width' => '50'],
-        ['id' => 'hero_image',   'label' => 'Image',   'type' => 'image'],
+        ['id' => 'hero_heading',  'label' => 'Heading',  'type' => 'text',  'width' => '50'],
+        ['id' => 'hero_tagline',  'label' => 'Tagline',  'type' => 'text',  'width' => '50'],
+        ['id' => 'hero_bg_color', 'label' => 'BG Color', 'type' => 'color', 'default' => '#0f172a'],
+        ['id' => 'hero_padding',  'label' => 'Padding',  'type' => 'range', 'min' => 20, 'max' => 200, 'step' => 10, 'unit' => 'px', 'default' => 80],
+        ['id' => 'hero_image',    'label' => 'Image',    'type' => 'image'],
+        ['id' => 'show_cta',      'label' => 'Show CTA', 'type' => 'checkbox'],
+        [
+            'id'        => 'featured_post',
+            'label'     => 'Featured Post',
+            'type'      => 'post_select',
+            'post_type' => 'post,page',
+        ],
+        [
+            'id'        => 'related_posts',
+            'label'     => 'Related Posts',
+            'type'      => 'post_select',
+            'post_type' => 'post',
+            'multiple'  => true,
+            'max'       => 5,
+        ],
+        [
+            'id'           => 'team_members',
+            'label'        => 'Team Members',
+            'type'         => 'repeater',
+            'button_label' => 'Add Member',
+            'max'          => 8,
+            'fields'       => [
+                ['id' => 'name',   'label' => 'Name',  'type' => 'text',  'width' => '50'],
+                ['id' => 'role',   'label' => 'Role',  'type' => 'text',  'width' => '50'],
+                ['id' => 'bio',    'label' => 'Bio',   'type' => 'textarea'],
+                ['id' => 'avatar', 'label' => 'Photo', 'type' => 'image', 'width' => '50'],
+            ],
+        ],
     ],
 ]);
 ```
@@ -435,12 +472,26 @@ new Metabox([
 
 ```php
 // In a MetaBlock's getData() method:
-$this->getMeta($postId, 'hero_heading');           // Returns string
-$this->getImageUrl($postId, 'hero_image', 'large'); // Returns URL string
+$this->getMeta($postId, 'hero_heading');              // string
+$this->getImageUrl($postId, 'hero_image', 'large');   // image URL string
 
-// Anywhere else (static):
-Metabox::get($postId, 'hero_heading');
-Metabox::get_image_url($postId, 'hero_image');
+// Static helpers — usable anywhere:
+Metabox::get($postId, 'hero_heading');                // raw meta value
+Metabox::get_bool($postId, 'show_cta');               // bool — for checkbox/toggle fields
+Metabox::get_color($postId, 'hero_bg_color', '#fff'); // string with fallback
+Metabox::get_image_url($postId, 'hero_image');        // image URL string
+Metabox::get_posts($postId, 'featured_post');         // int[] — works for single or multi post_select
+Metabox::get_repeater($postId, 'team_members');       // array[] — each element is an assoc row array
+```
+
+Example — looping a repeater:
+
+```php
+$team = Metabox::get_repeater($post->ID, 'team_members');
+foreach ($team as $member) {
+    echo '<h3>' . esc_html($member['name'] ?? '') . '</h3>';
+    echo '<p>'  . esc_html($member['role'] ?? '') . '</p>';
+}
 ```
 
 All meta keys are stored as `_taw_{field_id}` by default.
