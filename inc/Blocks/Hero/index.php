@@ -22,7 +22,7 @@ $button = new Button();
 
 ?>
 
-<section class="hero bg-amber-100!">
+<section class="hero">
     <div class="section-container flex justify-center items-stretch gap-10 mx-auto max-w-360 w-[90%]">
         <div class=" hero__content flex-1 flex flex-col justify-center">
             <?php if ($tagline): ?>
@@ -37,7 +37,7 @@ $button = new Button();
             </div>
         </div>
         <?php if ($image_url): ?>
-            <div class="image w-full">
+            <div class="image w-full max-w-200">
                 <?php echo Image::render((int) $image_url, 'full', 'Hero banner', [
                     'above_fold' => true,
                     'sizes'      => '100vw',
