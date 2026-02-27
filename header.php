@@ -18,7 +18,7 @@
 
     <a class="skip-link screen-reader-text" href="#content"><?php esc_html_e('Skip to content', 'taw-theme--classic-modern'); ?></a>
 
-    <header id="masthead" class="site-header" role="banner">
+    <header id="masthead" class="site-header flex items-center justify-between" role="banner">
         <div class="site-branding">
             <?php if (has_custom_logo()) : ?>
                 <?php the_custom_logo(); ?>
@@ -38,7 +38,7 @@
         </div><!-- .site-branding -->
 
         <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="<?php esc_attr_e('Primary Menu', 'taw-theme--classic-modern'); ?>">
-            <?php
+            <?php /* No needed! 
             wp_nav_menu(array(
                 'theme_location' => 'primary',
                 'menu_id'        => 'primary-menu',
@@ -46,7 +46,36 @@
                 'container'      => false,
                 'fallback_cb'    => false,
             ));
+            */ ?>
+            <?php
+
+            use TAW\Core\Menu\Menu;
+
+            $menu = Menu::get('primary');
             ?>
+
+            <?php if ($menu && $menu->hasItems()): ?>
+                <nav class="flex items-center gap-8">
+                    <?php foreach ($menu->items() as $item): ?>
+                        <div class="relative group" <?php if ($item->hasChildren()): ?>x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" <?php endif; ?>>
+                            <a href="<?php echo esc_url($item->url()); ?>" class="<?php echo $item->isInActiveTrail() ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'; ?> transition-colors">
+                                <?php echo esc_html($item->title()); ?>
+                            </a>
+
+                            <?php if ($item->hasChildren()): ?>
+                                <div x-show="open" x-transition class="absolute top-full left-0 mt-2 bg-white shadow-xl rounded-lg py-2 min-w-48">
+                                    <?php foreach ($item->children() as $child): ?>
+                                        <a href="<?php echo esc_url($child->url()); ?>"
+                                            class="block px-4 py-2 text-sm <?php echo $child->isActive() ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'; ?>">
+                                            <?php echo esc_html($child->title()); ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </nav>
+            <?php endif; ?>
         </nav><!-- #site-navigation -->
     </header><!-- #masthead -->
 

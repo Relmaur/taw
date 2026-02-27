@@ -114,6 +114,28 @@ class Hero extends MetaBlock
                             'type'  => 'image',
                             'width' => '50',
                         ],
+                        [
+                            'id' => 'group',
+                            'label' => 'Group',
+                            'type' => 'group',
+                            'fields' => [
+                                [
+                                    'id' => 'linkedin',
+                                    'label' => 'LinkedIn URL',
+                                    'type' => 'text',
+                                    'placeholder' => 'https://linkedin.com/in/username',
+                                    'width' => '50',
+                                ],
+                                [
+                                    'id' => 'twitter',
+                                    'label' => 'Twitter URL',
+                                    'type' => 'text',
+                                    'placeholder' => 'https://twitter.com/username',
+                                    'width' => '50',
+                                ],
+                            ],
+                            'width' => '50'
+                        ]
                     ],
                     'description' => 'Add your team members. Drag to reorder.',
                 ],

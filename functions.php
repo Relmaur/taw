@@ -13,6 +13,13 @@ add_action('admin_init', function () {
     remove_post_type_support('page', 'editor');
 });
 
+// Register a Menu
+add_action('after_setup_theme', function () {
+    register_nav_menus([
+        'primary' => __('Primary Menu', 'taw-theme--classic-modern'),
+    ]);
+});
+
 // Auto-discover and register all MetaBlocks
 TAW\Core\BlockLoader::loadAll();
 
