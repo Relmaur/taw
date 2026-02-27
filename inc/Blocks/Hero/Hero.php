@@ -22,13 +22,15 @@ class Hero extends MetaBlock
                     'id' => 'hero_heading',
                     'label' => 'Heading',
                     'type' => 'text',
-                    'width' => '33.33'
+                    'width' => '33.33',
+                    'required' => true,
                 ],
                 [
                     'id' => 'hero_tagline',
                     'label' => 'Tagline',
                     'type' => 'text',
-                    'width' => '33.33'
+                    'width' => '33.33',
+                    'required' => true,
                 ],
                 [
                     'id' => 'hero_image_url',

@@ -425,3 +425,9 @@ div[class|="postbox"]:not(:has(#side-sortables))
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.taw-required {
+  color: #d63638;
+  font-weight: bold;
+  margin-left: 2px;
+}

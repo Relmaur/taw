@@ -107,9 +107,9 @@ class Metabox
         );
     }
 
-    /* -------------------------------------------------------------------------
-     * Admin Assets
-     * ---------------------------------------------------------------------- */
+    /**
+     * MARK: Assets
+     */
 
     public function enqueue_admin_assets(string $hook): void
     {
@@ -785,56 +785,74 @@ class Metabox
         // });
     }
 
-    /* -------------------------------------------------------------------------
-     * Render
-     * ---------------------------------------------------------------------- */
+    /*
+     * MARK: Render 
+     */
 
     public function render(\WP_Post $post): void
     {
-        // Conditional visibility
         if (is_callable($this->show_on) && !call_user_func($this->show_on, $post)) {
-            // echo '<p class="description">This metabox is not applicable to this page.</p>';
-            // // Still output nonce so save() exits cleanly.
-            // wp_nonce_field($this->id . '_nonce_action', $this->id . '_nonce');
-            // return;
             return;
         }
 
         wp_nonce_field($this->id . '_nonce_action', $this->id . '_nonce');
 
-
-
-        if ($this->tabs && is_array($this->tabs)) {
-
-            $this->render_tabs($this->tabs, $this->prefix, $post);
-        } else { ?>
-
-            <div class="fields-container">
-                <?php foreach ($this->fields as $field):
-                    $field_id = $this->prefix . $field['id'];
-                    $value    = get_post_meta($post->ID, $field_id, true);
-                    $label    = $field['label'] ?? '';
-                    $desc     = $field['description'] ?? '';
-                    $width    = ($field['width'] ?? '100') . '%'; ?>
-
-                    <div class="field" style="--width: <?php echo esc_attr($width); ?>;">
-                        <div class="field-and-label">
-                            <label for="<?php echo esc_attr($field_id); ?>" class="field-label"><?php echo esc_html($label); ?></label>
-                            <?php
-                            $this->render_field($field, $field_id, $value, $post->ID);
-                            ?>
-                        </div>
-                        <?php if ($desc): ?>
-                            <p class="description"><?php echo esc_html($desc); ?></p>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <?php
+        // Build initial field values for Alpine.js reactive state
+        $initial_values = [];
+        foreach ($this->fields as $field) {
+            $field_id = $this->prefix . $field['id'];
+            $initial_values[$field_id] = get_post_meta($post->ID, $field_id, true) ?: '';
         }
+        ?>
+
+        <div class="fields-container"
+            x-data="{ fields: <?php echo esc_attr(wp_json_encode($initial_values)); ?> }"
+            x-init="
+            // Watch all inputs within this metabox and sync to reactive state
+            $el.querySelectorAll('input, select, textarea').forEach(el => {
+                if (el.name && fields.hasOwnProperty(el.name)) {
+                    el.addEventListener('input', () => { fields[el.name] = el.value; });
+                    el.addEventListener('change', () => { fields[el.name] = el.value; });
+                }
+            });
+         ">
+
+            <?php foreach ($this->fields as $field):
+                $field_id = $this->prefix . $field['id'];
+                $value    = get_post_meta($post->ID, $field_id, true);
+                $has_conditions = !empty($field['conditions']);
+            ?>
+
+                <div class="field"
+                    style="--width: <?php echo esc_attr(($field['width'] ?? '100') . '%'); ?>;"
+                    <?php if ($has_conditions): ?>
+                    x-show="<?php echo esc_attr($this->build_conditions_expression($field['conditions'])); ?>"
+                    x-cloak
+                    <?php endif; ?>>
+
+                    <div class="field-and-label">
+                        <label for="<?php echo esc_attr($field_id); ?>" class="field-label">
+                            <?php echo esc_html($field['label'] ?? ''); ?>
+                            <?php if (!empty($field['required'])): ?>
+                                <span class="taw-required">*</span>
+                            <?php endif; ?>
+                        </label>
+                        <?php $this->render_field($field, $field_id, $value, $post->ID); ?>
+                    </div>
+
+                    <?php if (!empty($field['description'])): ?>
+                        <p class="description"><?php echo esc_html($field['description']); ?></p>
+                    <?php endif; ?>
+                </div>
+
+            <?php endforeach; ?>
+        </div>
+        <?php
     }
 
     /**
+     * MARK: Renderers
+     * 
      * Render a single field by type.
      */
     private function render_field(array $field, string $field_id, mixed $value, ?int $post_id = null): void
@@ -952,7 +970,7 @@ class Metabox
                 $step = $field['step'] ?? 1;
                 $unit = $field['unit'] ?? '';  // e.g. 'px', '%', 'ms'
                 $current = $value !== '' ? $value : ($field['default'] ?? $min);
-            ?>
+        ?>
                 <div
                     class="taw-range-field"
                     x-data="{ val: <?php echo floatval($current); ?> }">
@@ -1261,10 +1279,36 @@ class Metabox
 <?php
     }
 
-    /* -------------------------------------------------------------------------
-     * Save
-     * ---------------------------------------------------------------------- */
+    /**
+     * Check if a field's conditions are met based on the submitted form data.
+     */
+    private function evaluate_conditions(array $conditions): bool
+    {
+        foreach ($conditions as $condition) {
+            $field_name = $this->prefix . $condition['field'];
+            $expected   = $condition['value'];
+            $operator   = $condition['operator'] ?? '==';
+            $actual     = $_POST[$field_name] ?? '';
 
+            $met = match ($operator) {
+                '=='       => $actual == $expected,
+                '!='       => $actual != $expected,
+                'contains' => str_contains($actual, $expected),
+                'empty'    => empty($actual),
+                '!empty'   => !empty($actual),
+                default    => $actual == $expected,
+            };
+
+            if (!$met) return false; // AND logic — all conditions must pass
+        }
+
+        return true;
+    }
+
+    /* 
+     * MARK: Save
+     * 
+     */
     public function save(int $post_id, \WP_Post $post): void
     {
         // Nonce check
@@ -1291,13 +1335,31 @@ class Metabox
             return;
         }
 
+        $errors = [];
+
         foreach ($this->fields as $field) {
+
+            if (!empty($field['conditions']) && !$this->evaluate_conditions($field['conditions'])) {
+                // Conditions not met — clean up any stale value
+                delete_post_meta($post_id, $field_id);
+                continue;
+            }
+
             $field_id = $this->prefix . $field['id'];
 
+            // Handle Group Fields
             if (($field['type'] ?? '') === 'group') {
                 $group_fields = $field['fields'] ?? [];
                 foreach ($group_fields as $group_field) {
                     $group_field_id = $field_id . '_' . $group_field['id'];
+                    $raw_value = $_POST[$group_field_id] ?? '';
+
+                    // Validate before saving
+                    $validation = $this->validate_field($group_field, $raw_value);
+                    if ($validation !== true) {
+                        $errors[] = $validation;
+                        continue;
+                    }
 
                     if (!isset($_POST[$group_field_id])) {
                         delete_post_meta($post_id, $group_field_id);
@@ -1311,6 +1373,22 @@ class Metabox
                 continue;
             }
 
+            $raw_value = $_POST[$field_id] ?? '';
+
+            // Validate 
+            $validation = $this->validate_field($field, $raw_value);
+            if ($validation !== true) {
+                $errors[] = $validation;
+                // Still save the raw (sanitized) value so the user's input isn't lost,
+                // but show the error. This is a UX decision — some frameworks
+                // refuse to save entirely, but losing user input is worse.
+                if (isset($_POST[$field_id])) {
+                    $value = $this->sanitize_field($field, $_POST[$field_id]);
+                    update_post_meta($post_id, $field_id, $value);
+                }
+                continue;
+            }
+
             if (!isset($_POST[$field_id])) {
                 delete_post_meta($post_id, $field_id);
                 continue;
@@ -1319,6 +1397,56 @@ class Metabox
             $value = $this->sanitize_field($field, $_POST[$field_id]);
             update_post_meta($post_id, $field_id, $value);
         }
+
+        // Display validation errors as admin notices
+        if (!empty($errors)) {
+            // Stores errors transiently - they'll be displayed on the next page load
+            set_transient(
+                'taw_validation_errors_' . $post_id,
+                $errors,
+                30 // Expires in 30 seconds
+            );
+        }
+    }
+
+    /**
+     * MARK: Helpers
+     */
+
+    /**
+     * Build an Alpine.js x-show expression from a field's conditions.
+     *
+     * The trick: Alpine watches the actual form inputs by their name attribute.
+     * We use $watch or direct references via x-model/x-ref, but the simplest
+     * approach for WordPress metaboxes is using the `$el.closest('form')` to
+     * read sibling field values.
+     *
+     * We attach an x-data listener at the metabox level that tracks all field values.
+     */
+    private function build_conditions_expression(array $conditions): string
+    {
+        $parts = [];
+
+        foreach ($conditions as $condition) {
+            $field_name = $this->prefix . $condition['field'];
+            $operator   = $condition['operator'] ?? '==';
+            $value      = $condition['value'];
+
+            // Reference the reactive data object
+            $field_ref = "fields['{$field_name}']";
+            $safe_val  = is_numeric($value) ? $value : "'" . esc_js($value) . "'";
+
+            $parts[] = match ($operator) {
+                '=='       => "{$field_ref} == {$safe_val}",
+                '!='       => "{$field_ref} != {$safe_val}",
+                'contains' => "{$field_ref} && {$field_ref}.includes({$safe_val})",
+                'empty'    => "!{$field_ref} || {$field_ref} === ''",
+                '!empty'   => "{$field_ref} && {$field_ref} !== ''",
+                default    => "{$field_ref} == {$safe_val}",
+            };
+        }
+
+        return implode(' && ', $parts);
     }
 
     /**
@@ -1431,6 +1559,33 @@ class Metabox
         }
 
         return wp_json_encode($clean_rows);
+    }
+
+    /**
+     * MARK: Validation
+     * 
+     * Validate a single field value.
+     *
+     * @return true|string True if valid, error message string if invalid.
+     */
+    private function validate_field(array $field, mixed $value): true|string
+    {
+        $label = $field['label'] ?? $field['id'];
+
+        // Required check
+        if (!empty($field['required']) && ($value === '' || $value === null)) {
+            return sprintf('%s is required.', $label);
+        }
+
+        // Custom validation callback
+        if (isset($field['validate']) && is_callable($field['validate'])) {
+            $result = call_user_func($field['validate'], $value);
+            if ($result !== true) {
+                return is_string($result) ? $result : sprintf('%s is invalid.', $label);
+            }
+        }
+
+        return true;
     }
 
     /* -------------------------------------------------------------------------

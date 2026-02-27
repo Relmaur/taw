@@ -5,6 +5,8 @@ require_once get_template_directory() . '/vendor/autoload.php';
 require_once get_template_directory() . '/inc/vite-loader.php';
 require_once get_template_directory() . '/inc/performance.php';
 
+require_once get_template_directory() . '/inc/options.php';
+
 add_action('wp_enqueue_scripts', function () {
     vite_enqueue_theme_assets();
 });
@@ -37,3 +39,24 @@ TAW\Core\BlockLoader::loadAll();
 add_action('wp_enqueue_scripts', [TAW\Core\BlockRegistry::class, 'enqueueQueuedAssets']);
 
 new TAW\Core\Rest\SearchEndpoints();
+
+/**
+ * Admin Notices
+ */
+add_action('admin_notices', function () {
+    global $post;
+    if (!$post) return;
+
+    $errors = get_transient('taw_validation_errors_' . $post->ID);
+    if (!$errors) return;
+
+    // Delete immediately so they don't persist
+    delete_transient('taw_validation_errors_' . $post->ID);
+
+    foreach ($errors as $error) {
+        printf(
+            '<div class="notice notice-error is-dismissible"><p>%s</p></div>',
+            esc_html($error)
+        );
+    }
+});
