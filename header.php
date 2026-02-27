@@ -18,7 +18,7 @@
 
     <a class="skip-link screen-reader-text" href="#content"><?php esc_html_e('Skip to content', 'taw-theme--classic-modern'); ?></a>
 
-    <header id="masthead" class="site-header flex items-center justify-between" role="banner">
+    <header id="masthead" class="site-header flex items-center justify-between py-3 px-5 border-b border-gray-200" role="banner">
         <div class="site-branding">
             <?php if (has_custom_logo()) : ?>
                 <?php the_custom_logo(); ?>

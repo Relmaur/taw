@@ -23,7 +23,6 @@ export default defineConfig(({ command }) => ({
         manifest: 'manifest.json',
         rollupOptions: {
             input: [
-                'resources/scss/app.scss',
                 'resources/scss/critical.scss',
                 'resources/js/app.js',
                 ...componentAssets,
