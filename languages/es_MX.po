@@ -1,0 +1,487 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TAW Theme\n"
+"POT-Creation-Date: 2026-02-27 21:54-0500\n"
+"PO-Revision-Date: 2026-02-27 22:03-0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: es_MX\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.8\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-Flags-xgettext: --add-comments=translators:\n"
+"X-Poedit-WPHeader: style.css\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: "
+"__;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.min.js\n"
+"X-Poedit-SearchPathExcluded-1: node_modules\n"
+"X-Poedit-SearchPathExcluded-2: vendor\n"
+
+#: 404.php:13
+msgid "Page Not Found"
+msgstr "Página no encontrada"
+
+#: 404.php:15
+msgid "The page you're looking for doesn't exist or may have been moved."
+msgstr "La página que estás buscando no existe o puede haber sido movida."
+
+#: 404.php:20
+msgid "Back to Home"
+msgstr "Volver a Inicio"
+
+#: archive.php:45
+msgid "&larr; Newer"
+msgstr "&larr; Más reciente"
+
+#: archive.php:45
+msgid "Older &rarr;"
+msgstr "Mayor &rarr;"
+
+#: archive.php:50 inc/Core/Metabox/Metabox.php:416
+msgid "No posts found."
+msgstr "No se encontraron publicaciones."
+
+#: footer.php:24 functions.php:33
+msgid "Footer Menu"
+msgstr "Menú del pie de página"
+
+#: functions.php:32 header.php:41
+msgid "Primary Menu"
+msgstr "Menú principal"
+
+#: header.php:19
+msgid "Skip to content"
+msgstr "Saltar al contenido"
+
+#: inc/Blocks/Hero/Hero.php:18 inc/Metabox/Hero/metabox-example.php:42
+msgid "Hero Section"
+msgstr "Sección Hero"
+
+#: inc/Blocks/Hero/Hero.php:23
+msgid "Heading"
+msgstr "Encabezado"
+
+#: inc/Blocks/Hero/Hero.php:30 inc/Metabox/Hero/metabox-example.php:65
+msgid "Tagline"
+msgstr "Eslogan"
+
+#: inc/Blocks/Hero/Hero.php:37 inc/Metabox/Hero/metabox-example.php:155
+msgid "Hero Image"
+msgstr "Imagen destacada"
+
+#: inc/Blocks/Hero/Hero.php:43
+msgid "Show Tagline"
+msgstr "Mostrar eslogan"
+
+#: inc/Blocks/Hero/Hero.php:45
+msgid "Enable or disable the tagline above the heading."
+msgstr "Activa o desactiva el eslogan que aparece encima del encabezado."
+
+#: inc/Blocks/Hero/Hero.php:50
+msgid "Hero Padding"
+msgstr "Espaciado"
+
+#: inc/Blocks/Hero/Hero.php:57
+msgid "Vertical padding for the hero section."
+msgstr "Relleno vertical para la sección principal."
+
+#: inc/Blocks/Hero/Hero.php:62
+msgid "Background Color"
+msgstr "Color de fondo"
+
+#: inc/Blocks/Hero/Hero.php:65
+msgid "Background color for the hero section."
+msgstr "Color de fondo para la sección principal."
+
+#: inc/Blocks/Hero/Hero.php:70
+msgid "Featured Post"
+msgstr "Publicación destacada"
+
+#: inc/Blocks/Hero/Hero.php:73
+msgid "Select a single post to feature."
+msgstr "Selecciona una sola publicación para destacar."
+
+#: inc/Blocks/Hero/Hero.php:78
+msgid "Related Posts"
+msgstr "Publicaciones relacionadas"
+
+#: inc/Blocks/Hero/Hero.php:83
+msgid "Select up to 5 related posts."
+msgstr "Selecciona hasta 5 publicaciones relacionadas."
+
+#: inc/Blocks/Hero/Hero.php:88
+msgid "Team Members"
+msgstr "Miembros del equipo"
+
+#: inc/Blocks/Hero/Hero.php:90
+msgid "Add Team Member"
+msgstr "Agregar Miembro del Equipo"
+
+#: inc/Blocks/Hero/Hero.php:95
+msgid "Name"
+msgstr "Nombre"
+
+#: inc/Blocks/Hero/Hero.php:97
+msgid "Full name"
+msgstr "Nombre completo"
+
+#: inc/Blocks/Hero/Hero.php:102
+msgid "Role"
+msgstr "Puesto"
+
+#: inc/Blocks/Hero/Hero.php:104
+msgid "e.g. Designer, Developer"
+msgstr "Por ejemplo, diseñador, desarrollador."
+
+#: inc/Blocks/Hero/Hero.php:109
+msgid "Bio"
+msgstr "Bio"
+
+#: inc/Blocks/Hero/Hero.php:115
+msgid "Photo"
+msgstr "Foto"
+
+#: inc/Blocks/Hero/Hero.php:121
+msgid "Group"
+msgstr "Grupo"
+
+#: inc/Blocks/Hero/Hero.php:126
+msgid "LinkedIn URL"
+msgstr "LinkedIn URL"
+
+#: inc/Blocks/Hero/Hero.php:133
+msgid "Twitter URL"
+msgstr "URL de Twitter"
+
+#: inc/Blocks/Hero/Hero.php:142
+msgid "Add your team members. Drag to reorder."
+msgstr "Agrega a los miembros de tu equipo. Arrastra para reordenar."
+
+#: inc/Blocks/Hero/index.php:35
+msgid "Get Started"
+msgstr "Empezar"
+
+#: inc/Blocks/Hero/index.php:36
+msgid "Learn More"
+msgstr "Saber más"
+
+#: inc/Core/Metabox/Metabox.php:216
+msgid "Select or Upload Image"
+msgstr "Seleccionar o Subir Imagen"
+
+#: inc/Core/Metabox/Metabox.php:218
+msgid "Use this image"
+msgstr "Usar la imagen de fondo"
+
+#: inc/Core/Metabox/Metabox.php:396
+msgid "Search failed. Please try again."
+msgstr "La búsqueda no ha tenido éxito. Inténtalo de nuevo."
+
+#: inc/Core/Metabox/Metabox.php:428 inc/Core/Metabox/Metabox.php:513
+msgid "(no title)"
+msgstr "(sin título)"
+
+#: inc/Core/Metabox/Metabox.php:515 inc/Core/OptionsPage.php:330
+msgid "Remove"
+msgstr "Eliminar"
+
+#: inc/Core/Metabox/Metabox.php:529
+msgid "selected"
+msgstr "seleccionado"
+
+#: inc/Core/Metabox/Metabox.php:1019 inc/Core/OptionsPage.php:327
+msgid "Select Image"
+msgstr "Seleccionar imagen"
+
+#: inc/Core/Metabox/Metabox.php:1023
+msgid "Remove Image"
+msgstr "Remover imagen"
+
+#: inc/Core/Metabox/Metabox.php:1088
+msgid "Search to add posts…"
+msgstr "Buscar para agregar publicaciones..."
+
+#: inc/Core/Metabox/Metabox.php:1088
+msgid "Search for a post…"
+msgstr "Buscar una publicación..."
+
+#: inc/Core/Metabox/Metabox.php:1101
+msgid "Add Row"
+msgstr "Agregar Renglón"
+
+#: inc/Core/Metabox/Metabox.php:1240
+msgid "Drag to reorder"
+msgstr "Arrastre para reordenar"
+
+#: inc/Core/Metabox/Metabox.php:1244
+msgid "Collapse"
+msgstr "Colapso"
+
+#: inc/Core/Metabox/Metabox.php:1245
+msgid "Remove row"
+msgstr "Quitar fila"
+
+#. translators: %s: field label
+#: inc/Core/Metabox/Metabox.php:1578
+#, php-format
+msgid "%s is required."
+msgstr "%s es requerido."
+
+#. translators: %s: field label
+#: inc/Core/Metabox/Metabox.php:1586
+#, php-format
+msgid "%s is invalid."
+msgstr "%s no es válido."
+
+#: inc/Core/OptionsPage.php:187
+msgid "Tab"
+msgstr "Pestaña"
+
+#: inc/Core/OptionsPage.php:327
+msgid "Change Image"
+msgstr "Cambiar imagen"
+
+#: inc/Metabox/Hero/metabox-example.php:51
+msgid "Settings"
+msgstr "Ajustes"
+
+#: inc/Metabox/Hero/metabox-example.php:57
+msgid "Style"
+msgstr "Estilo"
+
+#: inc/Metabox/Hero/metabox-example.php:67
+msgid "e.g. Bridging modern web architecture…"
+msgstr "Por ejemplo, uniendo la arquitectura web moderna..."
+
+#: inc/Metabox/Hero/metabox-example.php:68
+msgid "Short introductory text displayed above the headline."
+msgstr "Texto introductorio breve que aparece encima del titular."
+
+#: inc/Metabox/Hero/metabox-example.php:82
+msgid "Description"
+msgstr "Descripción"
+
+#: inc/Metabox/Hero/metabox-example.php:85
+msgid "Supporting paragraph below the heading. Supports basic HTML."
+msgstr "Párrafo de apoyo debajo del encabezado. Admite HTML básico."
+
+#: inc/Metabox/Hero/metabox-example.php:90
+msgid "Hero Code Snippet"
+msgstr "Fragmento de código de héroe"
+
+#: inc/Metabox/Hero/metabox-example.php:94
+msgid ""
+"Optional code snippet (e.g., HTML, shortcode) to display in the hero section."
+msgstr ""
+"Fragmento de código opcional (por ejemplo, HTML, código corto) para mostrar "
+"en la sección principal."
+
+#: inc/Metabox/Hero/metabox-example.php:95
+msgid "Code Snippet displayed in the hero section."
+msgstr "Fragmento de código mostrado en la sección principal."
+
+#: inc/Metabox/Hero/metabox-example.php:100
+msgid "Code Snippet Formatting"
+msgstr "Formato de fragmentos de código"
+
+#: inc/Metabox/Hero/metabox-example.php:103
+msgid "None"
+msgstr "Ninguna"
+
+#: inc/Metabox/Hero/metabox-example.php:104
+msgid "HTML"
+msgstr "HTML"
+
+#: inc/Metabox/Hero/metabox-example.php:105
+msgid "CSS"
+msgstr "CSS"
+
+#: inc/Metabox/Hero/metabox-example.php:106
+msgid "JavaScript"
+msgstr "JavaScript"
+
+#: inc/Metabox/Hero/metabox-example.php:107
+msgid "PHP"
+msgstr "PHP"
+
+#: inc/Metabox/Hero/metabox-example.php:108
+msgid "Other"
+msgstr "Otro"
+
+#: inc/Metabox/Hero/metabox-example.php:111
+msgid "Specify the language of the code snippet for proper formatting."
+msgstr ""
+"Especifique el idioma del fragmento de código para que se formatee "
+"correctamente."
+
+#: inc/Metabox/Hero/metabox-example.php:115
+msgid "Hero CTA (Primary)"
+msgstr "Llamada a la acción del héroe (primaria)"
+
+#: inc/Metabox/Hero/metabox-example.php:120
+#: inc/Metabox/Hero/metabox-example.php:140
+msgid "Text"
+msgstr "Texto"
+
+#: inc/Metabox/Hero/metabox-example.php:122
+#: inc/Metabox/Hero/metabox-example.php:142
+msgid "e.g. Get in touch!"
+msgstr "Por ejemplo: ¡Póngase en contacto con nosotros!"
+
+#: inc/Metabox/Hero/metabox-example.php:126
+#: inc/Metabox/Hero/metabox-example.php:146
+msgid "URL"
+msgstr "URL"
+
+#: inc/Metabox/Hero/metabox-example.php:135
+msgid "Hero CTA (Secondary)"
+msgstr "Héroe CTA (secundario)"
+
+#: inc/Metabox/Hero/metabox-example.php:157
+msgid ""
+"Optional image displayed in the hero section. Recommended dimensions: "
+"1200x800px."
+msgstr ""
+"Imagen opcional que se muestra en la sección principal. Dimensiones "
+"recomendadas: 1200 x 800 píxeles."
+
+#: inc/Metabox/Hero/metabox-example.php:168
+msgid "Stats Section"
+msgstr "Sección de estadísticas"
+
+#: inc/Metabox/Hero/metabox-example.php:176
+msgid "Stat 1 — Value"
+msgstr "Estadística 1 — Valor"
+
+#: inc/Metabox/Hero/metabox-example.php:178
+msgid "e.g. 4+"
+msgstr "por ejemplo, 4+"
+
+#: inc/Metabox/Hero/metabox-example.php:182
+msgid "Stat 1 — Label"
+msgstr "Estadística 1 — Etiqueta"
+
+#: inc/Metabox/Hero/metabox-example.php:184
+msgid "e.g. Years of Experience"
+msgstr "por ejemplo, años de experiencia."
+
+#: inc/Metabox/Hero/metabox-example.php:188
+msgid "Stat 2 — Value"
+msgstr "Estadística 2 — Valor"
+
+#: inc/Metabox/Hero/metabox-example.php:190
+msgid "e.g. 50+"
+msgstr "por ejemplo, más de 50."
+
+#: inc/Metabox/Hero/metabox-example.php:194
+msgid "Stat 2 — Label"
+msgstr "Estadística 2 — Etiqueta"
+
+#: inc/Metabox/Hero/metabox-example.php:196
+msgid "e.g. Projects Completed"
+msgstr "por ejemplo, proyectos completados."
+
+#: inc/Metabox/Hero/metabox-example.php:200
+msgid "Stat 3 — Value"
+msgstr "Estadística 3 — Valor"
+
+#: inc/Metabox/Hero/metabox-example.php:202
+msgid "e.g. 100%"
+msgstr "por ejemplo, 100 %."
+
+#: inc/Metabox/Hero/metabox-example.php:206
+msgid "Stat 3 — Label"
+msgstr "Estadística 3 — Etiqueta"
+
+#: inc/Metabox/Hero/metabox-example.php:208
+msgid "e.g. Project Success Rate"
+msgstr "por ejemplo, tasa de éxito del proyecto."
+
+#: inc/options.php:7 inc/options.php:8
+msgid "TAW Settings"
+msgstr "Configuración de TAW"
+
+#: inc/options.php:12
+msgid "Company Name"
+msgstr "Nombre de la empresa"
+
+#: inc/options.php:13
+msgid "Phone Number"
+msgstr "Número de teléfono"
+
+#: inc/options.php:14
+msgid "Email Address"
+msgstr "Email"
+
+#: inc/options.php:15
+msgid "Footer Copyright"
+msgstr "Pie de página para Copyright"
+
+#: inc/options.php:16
+msgid "Facebook URL"
+msgstr "URL de Facebook"
+
+#: inc/options.php:17
+msgid "Instagram URL"
+msgstr "URL de Instagram"
+
+#: inc/options.php:20
+msgid "General"
+msgstr "General"
+
+#: inc/options.php:21
+msgid "Footer"
+msgstr "Pie de página"
+
+#: inc/options.php:22
+msgid "Social"
+msgstr "Social"
+
+#. translators: %s: search query
+#: search.php:16
+#, php-format
+msgid "Results for: %s"
+msgstr "Resultados para: %s"
+
+#: search.php:45
+msgid "&larr; Previous"
+msgstr "&larr; Anterior"
+
+#: search.php:45
+msgid "Next &rarr;"
+msgstr "Siguiente &rarr;"
+
+#: search.php:51
+msgid "No results found. Try different keywords."
+msgstr "No se han encontrado resultados. Prueba con otras palabras clave."
+
+#: single.php:36
+msgid "Tagged: "
+msgstr "Etiquetado: "
+
+#. Theme Name of the plugin/theme
+msgid "TAW Theme"
+msgstr "Tema TAW"
+
+#. Theme URI of the plugin/theme
+#. Author URI of the plugin/theme
+msgid "https://mlizardo.com"
+msgstr "https://mlizardo.com"
+
+#. Description of the plugin/theme
+msgid ""
+"A classic WordPress theme with a component-based block architecture, "
+"featuring Vite v7, Tailwind CSS v4, Alpine.js, and a bespoke metabox "
+"framework. TAW = Tailwind + Alpine + WordPress."
+msgstr ""
+"Un tema clásico de WordPress con una arquitectura de bloques basada en "
+"componentes, que incluye Vite v7, Tailwind CSS v4, Alpine.js y un marco de "
+"metaboxes personalizado. TAW = Tailwind + Alpine + WordPress."
+
+#. Author of the plugin/theme
+msgid "M. Lizardo"
+msgstr "M. Lizardo"

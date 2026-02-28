@@ -42,7 +42,7 @@ get_header();
         </div>
 
         <div class="mt-12">
-            <?php the_posts_pagination(['prev_text' => '&larr; Newer', 'next_text' => 'Older &rarr;']); ?>
+            <?php the_posts_pagination(['prev_text' => __('&larr; Newer', 'taw-theme'), 'next_text' => __('Older &rarr;', 'taw-theme')]); ?>
         </div>
 
     <?php else : ?>

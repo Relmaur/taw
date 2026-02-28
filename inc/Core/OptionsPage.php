@@ -184,7 +184,7 @@ class OptionsPage
                         <?php if (!empty($tab['icon'])): ?>
                             <img src="<?php echo esc_url($tab['icon']); ?>" alt="">
                         <?php endif; ?>
-                        <p><?php echo esc_html($tab['label'] ?? 'Tab'); ?></p>
+                        <p><?php echo esc_html($tab['label'] ?? __('Tab', 'taw-theme')); ?></p>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -324,10 +324,10 @@ class OptionsPage
                         <?php endif; ?>
                     </div>
                     <button type="button" class="button taw-image-upload">
-                        <?php echo $value ? 'Change Image' : 'Select Image'; ?>
+                        <?php echo $value ? esc_html__('Change Image', 'taw-theme') : esc_html__('Select Image', 'taw-theme'); ?>
                     </button>
                     <?php if ($value): ?>
-                        <button type="button" class="button taw-image-remove">Remove</button>
+                        <button type="button" class="button taw-image-remove"><?php esc_html_e('Remove', 'taw-theme'); ?></button>
                     <?php endif; ?>
                 </div>
             <?php

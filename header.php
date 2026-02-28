@@ -16,7 +16,7 @@
 <body <?php body_class(); ?>>
     <?php wp_body_open(); ?>
 
-    <a class="skip-link screen-reader-text" href="#content"><?php esc_html_e('Skip to content', 'taw-theme--classic-modern'); ?></a>
+    <a class="skip-link screen-reader-text" href="#content"><?php esc_html_e('Skip to content', 'taw-theme'); ?></a>
 
     <header id="masthead" class="site-header flex items-center justify-between py-3 px-5 border-b border-gray-200" role="banner">
         <div class="site-branding">
@@ -38,7 +38,7 @@
         </div><!-- .site-branding -->
 
         <div class="nav-and-phone flex gap-4 items-center">
-            <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="<?php esc_attr_e('Primary Menu', 'taw-theme--classic-modern'); ?>">
+            <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="<?php esc_attr_e('Primary Menu', 'taw-theme'); ?>">
                 <?php /* No needed!
                 wp_nav_menu(array(
                     'theme_location' => 'primary',

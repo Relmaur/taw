@@ -26,14 +26,14 @@ $button = new Button();
     <div class="section-container flex justify-center items-stretch gap-10 mx-auto max-w-360 w-[90%]">
         <div class=" hero__content flex-1 flex flex-col justify-center">
             <?php if ($tagline): ?>
-                <p class="hero__tagline text-white"><?php echo esc_html($tagline); ?></p>
+                <p class="hero__tagline"><?php echo esc_html($tagline); ?></p>
             <?php endif; ?>
             <?php if ($heading): ?>
                 <h1 class="hero__heading text-5xl"><?php echo esc_html($heading); ?></h1>
             <?php endif; ?>
             <div class="flex items-center justify-start mt-2 gap-2">
-                <?php $button->render(['text' => 'Get Started', 'url' => '/contact']); ?>
-                <?php $button->render(['text' => 'Learn More', 'url' => '/about', 'variant' => 'secondary']); ?>
+                <?php $button->render(['text' => __('Get Started', 'taw-theme'), 'url' => '/contact']); ?>
+                <?php $button->render(['text' => __('Learn More', 'taw-theme'), 'url' => '/about', 'variant' => 'secondary']); ?>
             </div>
         </div>
         <?php if ($image_url): ?>

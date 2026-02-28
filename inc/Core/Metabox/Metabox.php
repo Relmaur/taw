@@ -213,9 +213,9 @@ class Metabox
                             $remove = $wrapper.find('.taw-remove-image');
 
                         var frame = wp.media({
-                            title: 'Select or Upload Image',
+                            title: '<?php echo esc_js(__('Select or Upload Image', 'taw-theme')); ?>',
                             button: {
-                                text: 'Use this image'
+                                text: '<?php echo esc_js(__('Use this image', 'taw-theme')); ?>'
                             },
                             multiple: false,
                             library: {
@@ -393,7 +393,7 @@ class Metabox
                                     },
                                     error: function() {
                                         $results.html(
-                                            '<div class="taw-ps-no-results">Search failed. Please try again.</div>'
+                                            '<div class="taw-ps-no-results"><?php echo esc_js(__('Search failed. Please try again.', 'taw-theme')); ?></div>'
                                         ).show();
                                     }
                                 });
@@ -413,7 +413,7 @@ class Metabox
 
                                 if (!posts.length) {
                                     $results.html(
-                                        '<div class="taw-ps-no-results">No posts found.</div>'
+                                        '<div class="taw-ps-no-results"><?php echo esc_js(__('No posts found.', 'taw-theme')); ?></div>'
                                     ).show();
                                     return;
                                 }
@@ -425,7 +425,7 @@ class Metabox
                                             '<img src="' + post.thumbnail + '" class="taw-ps-thumb" alt="">' :
                                             '<span class="taw-ps-thumb taw-ps-thumb--empty"></span>') +
                                         '<span class="taw-ps-result-info">' +
-                                        '<span class="taw-ps-result-title">' + $('<span>').text(post.title || '(no title)').html() + '</span>' +
+                                        '<span class="taw-ps-result-title">' + $('<span>').text(post.title || '<?php echo esc_js(__('(no title)', 'taw-theme')); ?>').html() + '</span>' +
                                         '<span class="taw-ps-result-meta">' + post.post_type + ' · ' + post.date + '</span>' +
                                         '</span>' +
                                         '</div>'
@@ -510,9 +510,9 @@ class Metabox
                                         (post.thumbnail ?
                                             '<img src="' + post.thumbnail + '" class="taw-ps-pill-thumb" alt="">' :
                                             '') +
-                                        '<span class="taw-ps-pill-title">' + $('<span>').text(post.title || '(no title)').html() + '</span>' +
+                                        '<span class="taw-ps-pill-title">' + $('<span>').text(post.title || '<?php echo esc_js(__('(no title)', 'taw-theme')); ?>').html() + '</span>' +
                                         '<span class="taw-ps-pill-meta">' + post.post_type + '</span>' +
-                                        '<button type="button" class="taw-ps-pill-remove" title="Remove">&times;</button>' +
+                                        '<button type="button" class="taw-ps-pill-remove" title="<?php echo esc_js(__('Remove', 'taw-theme')); ?>">&times;</button>' +
                                         '</div>'
                                     );
 
@@ -526,7 +526,7 @@ class Metabox
                                 // Show count for multi mode with max
                                 if (multiple && max > 0) {
                                     $selected.append(
-                                        '<div class="taw-ps-count">' + selection.length + ' / ' + max + ' selected</div>'
+                                        '<div class="taw-ps-count">' + selection.length + ' / ' + max + ' <?php echo esc_js(__('selected', 'taw-theme')); ?></div>'
                                     );
                                 }
                             }
@@ -1085,7 +1085,7 @@ class Metabox
                     <div class="taw-post-selector-search-wrap">
                         <input type="text"
                             class="taw-post-selector-search regular-text"
-                            placeholder="<?php echo esc_attr($multiple ? 'Search to add posts…' : 'Search for a post…'); ?>"
+                            placeholder="<?php echo esc_attr($multiple ? __('Search to add posts…', 'taw-theme') : __('Search for a post…', 'taw-theme')); ?>"
                             autocomplete="off">
                         <div class="taw-post-selector-results"></div>
                     </div>
@@ -1098,7 +1098,7 @@ class Metabox
                 $sub_fields  = $field['fields'] ?? [];
                 $max_rows    = $field['max'] ?? 0;      // 0 = unlimited
                 $min_rows    = $field['min'] ?? 0;
-                $button_label = $field['button_label'] ?? 'Add Row';
+                $button_label = $field['button_label'] ?? __('Add Row', 'taw-theme');
 
                 // Decode saved rows
                 $rows = $value ? json_decode($value, true) : [];
@@ -1237,12 +1237,12 @@ class Metabox
     ?>
         <div class="taw-repeater-row" data-index="<?php echo esc_attr((string) $index); ?>">
             <div class="taw-repeater-row-header">
-                <span class="taw-repeater-row-drag" title="Drag to reorder">☰</span>
+                <span class="taw-repeater-row-drag" title="<?php esc_attr_e('Drag to reorder', 'taw-theme'); ?>">☰</span>
                 <span class="taw-repeater-row-title">
                     <?php echo esc_html('#' . (is_int($index) ? $index + 1 : '')); ?>
                 </span>
-                <button type="button" class="taw-repeater-row-toggle" title="Collapse">▾</button>
-                <button type="button" class="taw-repeater-row-remove" title="Remove row">&times;</button>
+                <button type="button" class="taw-repeater-row-toggle" title="<?php esc_attr_e('Collapse', 'taw-theme'); ?>">▾</button>
+                <button type="button" class="taw-repeater-row-remove" title="<?php esc_attr_e('Remove row', 'taw-theme'); ?>">&times;</button>
             </div>
             <div class="taw-repeater-row-content">
                 <div class="fields-container">
@@ -1574,14 +1574,16 @@ class Metabox
 
         // Required check
         if (!empty($field['required']) && ($value === '' || $value === null)) {
-            return sprintf('%s is required.', $label);
+            /* translators: %s: field label */
+            return sprintf(__('%s is required.', 'taw-theme'), $label);
         }
 
         // Custom validation callback
         if (isset($field['validate']) && is_callable($field['validate'])) {
             $result = call_user_func($field['validate'], $value);
             if ($result !== true) {
-                return is_string($result) ? $result : sprintf('%s is invalid.', $label);
+                /* translators: %s: field label */
+                return is_string($result) ? $result : sprintf(__('%s is invalid.', 'taw-theme'), $label);
             }
         }
 

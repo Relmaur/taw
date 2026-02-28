@@ -33,7 +33,7 @@ get_header();
             </div>
 
             <footer class="mt-12 pt-8 border-t border-gray-100">
-                <?php the_tags('<p class="text-sm text-gray-500">Tagged: ', ', ', '</p>'); ?>
+                <?php the_tags('<p class="text-sm text-gray-500">' . __('Tagged: ', 'taw-theme'), ', ', '</p>'); ?>
                 <nav class="flex justify-between mt-4 text-sm">
                     <span><?php previous_post_link('%link', '&larr; %title'); ?></span>
                     <span><?php next_post_link('%link', '%title &rarr;'); ?></span>
