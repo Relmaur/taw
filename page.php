@@ -1,7 +1,7 @@
 <?php
 /**
  * page.php — Template for standard WordPress pages.
- *
+ *<?php BlockRegistry::render('pricing_table'); ?>
  * Pages in TAW are block-driven (the editor is removed for the 'page'
  * post type). Queue the blocks this page needs before get_header(), then
  * render them below.
@@ -12,11 +12,12 @@
 
 use TAW\Core\BlockRegistry;
 
-BlockRegistry::queue('hero');
+BlockRegistry::queue('hero', 'pricing_table');
 
 get_header();
 ?>
 
 <?php BlockRegistry::render('hero'); ?>
+<?php BlockRegistry::render('pricing_table'); ?>
 
 <?php get_footer();

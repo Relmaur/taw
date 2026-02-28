@@ -1,0 +1,43 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * TAW CLI — Theme scaffolding and management tool.
+ *
+ * Usage:
+ *   php bin/taw make:block Hero --type=meta
+ *   php bin/taw list
+ *   php bin/taw help make:block
+ *
+ * This is a standalone tool — it does NOT require WordPress to be loaded.
+ * It uses Symfony Console for a rich, self-documenting CLI experience.
+ */
+
+// Find the Composer autoloader.
+// We walk up from bin/ to the theme root where vendor/ lives.
+$autoload = dirname(__DIR__) . '/vendor/autoload.php';
+
+if (!file_exists($autoload)) {
+    fwrite(STDERR, "Run 'composer install' first.\n");
+    exit(1);
+}
+
+require $autoload;
+
+use Symfony\Component\Console\Application;
+use TAW\CLI\MakeBlockCommand;
+use TAW\CLI\ExportBlockCommand;
+use TAW\CLI\ImportBlockCommand;
+
+// Create the application
+// The two arguments are: name and version.
+// Symfony uses these in the --version flag and help screens.
+$app = new Application('TAW CLI', '1.0.0');
+
+// Register commands
+$app->add(new MakeBlockCommand());
+$app->add(new ExportBlockCommand());
+$app->add(new ImportBlockCommand());
+
+// Run it — Symfony handles argument parsing, --help, errors, etc.
+$app->run();
