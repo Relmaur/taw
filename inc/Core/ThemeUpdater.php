@@ -29,7 +29,7 @@ class ThemeUpdater
     {
         $this->slug            = $config['slug'] ?? 'taw-theme';
         $this->github_url      = $config['github_url'];
-        $this->current_version = wp_get_theme($this->slug)->get('Version');
+        $this->current_version = wp_get_theme($this->slug)->get('Version') ?: '0.0.0';
         $this->cache_key       = 'taw_update_' . $this->slug;
 
         // Hook into WordPress's update check
