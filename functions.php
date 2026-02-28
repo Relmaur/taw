@@ -62,3 +62,11 @@ add_action('admin_notices', function () {
         );
     }
 });
+
+// Theme auto-updater (only needed if distributing outside wordpress.org)
+if (is_admin()) {
+    new \TAW\Core\ThemeUpdater([
+        'slug'       => 'taw-theme',
+        'github_url' => 'https://api.github.com/repos/YOUR_USERNAME/taw-theme/releases/latest',
+    ]);
+}
