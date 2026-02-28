@@ -1,5 +1,4 @@
 <?php
-// inc/Blocks/Button/Button.php
 
 namespace TAW\Blocks\Button;
 

@@ -3,7 +3,7 @@ You are working on TAW Theme — a classic WordPress theme with a custom block a
 Full architecture docs: see AGENTS.md in the repo root.
 
 Key rules:
-- Blocks live in inc/Blocks/{Name}/{Name}.php — folder MUST match class name
+- Blocks live in Blocks/{Name}/{Name}.php — folder MUST match class name
 - MetaBlock = data-owning (metaboxes + post_meta), Block = presentational (props)
 - Auto-discovery via BlockLoader::loadAll() — never register manually in functions.php
 - Template pattern: BlockRegistry::queue() before get_header(), render() in body
@@ -14,7 +14,7 @@ Key rules:
 
 New blocks:
 - Scaffold with: php bin/taw make:block Name --type=meta --with-style && composer dump-autoload
-- Or manually create inc/Blocks/{Name}/{Name}.php + index.php (no functions.php changes)
+- Or manually create Blocks/{Name}/{Name}.php + index.php (no functions.php changes)
 
 Options page:
 - OptionsPage stores site settings in wp_options, same field config as Metabox

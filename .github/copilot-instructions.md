@@ -9,7 +9,7 @@ A classic WordPress theme with a custom block system, Vite v7, Tailwind v4, Alpi
 ## Key Architecture
 
 - Framework internals in `inc/Core/` (namespace `TAW\Core`): `BaseBlock`, `Block`, `MetaBlock`, `BlockLoader`, `BlockRegistry`, `Metabox\Metabox`, `OptionsPage`, `ThemeUpdater`, `Menu\Menu`, `Menu\MenuItem`, `Rest\SearchEndpoints`
-- Dev blocks: `inc/Blocks/{Name}/{Name}.php` — folder name must match class name, namespace `TAW\Blocks\{Name}\{Name}`
+- Dev blocks: `Blocks/{Name}/{Name}.php` — folder name must match class name, namespace `TAW\Blocks\{Name}\{Name}`
 - Two types: **MetaBlock** (data-owning, uses metaboxes) and **Block** (presentational, receives props)
 - Auto-discovery via `BlockLoader::loadAll()` — no manual registration
 - Asset queueing: `BlockRegistry::queue()` before `get_header()`, then `BlockRegistry::render()` in body
@@ -18,7 +18,7 @@ A classic WordPress theme with a custom block system, Vite v7, Tailwind v4, Alpi
 ## New Blocks
 
 Scaffold with the CLI: `php bin/taw make:block Name --type=meta --with-style`, then `composer dump-autoload`.
-Or manually create `inc/Blocks/{Name}/{Name}.php` + `inc/Blocks/{Name}/index.php` — no other changes needed.
+Or manually create `Blocks/{Name}/{Name}.php` + `Blocks/{Name}/index.php` — no other changes needed.
 
 ## Options Page
 

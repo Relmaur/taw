@@ -3,9 +3,9 @@ import fullReload from 'vite-plugin-full-reload';
 import tailwindcss from '@tailwindcss/vite';
 import { readdirSync } from 'fs';
 
-const componentAssets = readdirSync('inc/Blocks', { recursive: true })
+const componentAssets = readdirSync('Blocks', { recursive: true })
     .filter(f => f.endsWith('style.css') || f.endsWith('style.scss') || f.endsWith('script.js'))
-    .map(f => `inc/Blocks/${f}`);
+    .map(f => `Blocks/${f}`);
 
 export default defineConfig(({ command }) => ({
     // './' makes font/asset URLs relative in the compiled CSS so they

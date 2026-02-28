@@ -4,7 +4,7 @@ Full architecture docs: see AGENTS.md in the repo root.
 
 # Core Concepts
 
-- Blocks live in inc/Blocks/{Name}/{Name}.php — folder name MUST match class name.
+- Blocks live in Blocks/{Name}/{Name}.php — folder name MUST match class name.
 - Two types: MetaBlock (owns metaboxes, fetches post_meta) and Block (presentational, receives props).
 - BlockLoader::loadAll() auto-discovers blocks. Never manually register in functions.php.
 - BlockRegistry::queue() before get_header(), then BlockRegistry::render() in template body.
@@ -21,19 +21,19 @@ Full architecture docs: see AGENTS.md in the repo root.
 
 # Creating a MetaBlock
 
-1. Create inc/Blocks/{Name}/{Name}.php extending TAW\Blocks\MetaBlock
+1. Create Blocks/{Name}/{Name}.php extending TAW\Blocks\MetaBlock
 2. Set protected string $id = '{name}';
 3. Implement registerMetaboxes() — use new Metabox([...])
 4. Implement getData(int $postId): array — return template variables
-5. Create inc/Blocks/{Name}/index.php — template receives extracted vars
+5. Create Blocks/{Name}/index.php — template receives extracted vars
 6. Optionally add style.css (or style.scss) and script.js — auto-enqueued
 
 # Creating a UI Block
 
-1. Create inc/Blocks/{Name}/{Name}.php extending TAW\Blocks\Block
+1. Create Blocks/{Name}/{Name}.php extending TAW\Blocks\Block
 2. Set protected string $id = '{name}';
 3. Implement defaults(): array — return default prop values
-4. Create inc/Blocks/{Name}/index.php — template receives merged props
+4. Create Blocks/{Name}/index.php — template receives merged props
 5. Use directly: (new Button())->render(['text' => 'Click'])
 
 # Metabox Framework

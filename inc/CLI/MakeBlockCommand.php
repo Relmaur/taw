@@ -164,7 +164,7 @@ class MakeBlockCommand extends Command
         }
 
         // --- Check if block already exists ---
-        $blockDir = $this->themeDir . '/inc/Blocks/' . $name;
+        $blockDir = $this->themeDir . '/Blocks/' . $name;
         $force    = $input->getOption('force');
 
         if (is_dir($blockDir) && !$force) {
@@ -197,14 +197,14 @@ class MakeBlockCommand extends Command
             ? $this->generateMetaBlockClass($name, $id)
             : $this->generateUiBlockClass($name, $id);
         file_put_contents($blockDir . '/' . $name . '.php', $classContent);
-        $createdFiles[] = ['Class', "inc/Blocks/{$name}/{$name}.php"];
+        $createdFiles[] = ['Class', "Blocks/{$name}/{$name}.php"];
 
         // 2. Template
         $templateContent = $type === 'meta'
             ? $this->generateMetaTemplate($name, $id)
             : $this->generateUiTemplate($name, $id);
         file_put_contents($blockDir . '/index.php', $templateContent);
-        $createdFiles[] = ['Template', "inc/Blocks/{$name}/index.php"];
+        $createdFiles[] = ['Template', "Blocks/{$name}/index.php"];
 
         // 3. Optional style
         if ($withStyle) {
@@ -222,7 +222,7 @@ class MakeBlockCommand extends Command
             }
             SCSS;
             file_put_contents($blockDir . '/style.scss', $scss);
-            $createdFiles[] = ['Stylesheet', "inc/Blocks/{$name}/style.scss"];
+            $createdFiles[] = ['Stylesheet', "Blocks/{$name}/style.scss"];
         }
 
         // 4. Optional script
@@ -238,7 +238,7 @@ class MakeBlockCommand extends Command
             console.log('{$name} block initialized.');
             JS;
             file_put_contents($blockDir . '/script.js', $js);
-            $createdFiles[] = ['Script', "inc/Blocks/{$name}/script.js"];
+            $createdFiles[] = ['Script', "Blocks/{$name}/script.js"];
         }
 
         // --- Success output ---
