@@ -2,7 +2,8 @@
     "name": "marcodelriego/taw-theme",
     "autoload": {
         "psr-4": {
-            "TAW\\": "inc/"
+            "TAW\\": "inc/",
+            "TAW\\Blocks\\": "Blocks/"
         }
     },
     "authors": [

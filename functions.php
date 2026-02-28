@@ -67,6 +67,6 @@ add_action('admin_notices', function () {
 if (is_admin()) {
     new \TAW\Core\ThemeUpdater([
         'slug'       => 'taw-theme',
-        'github_url' => 'https://api.github.com/repos/YOUR_USERNAME/taw-theme/releases/latest',
+        'github_url' => 'https://api.github.com/repos/Relmaur/taw-theme/releases/latest',
     ]);
 }

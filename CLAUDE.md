@@ -22,13 +22,13 @@ php bin/taw import:block path/to/Block.zip            # Import block from ZIP
 
 Framework internals live in `inc/Core/` (namespace `TAW\Core`): `BaseBlock`, `Block`, `MetaBlock`, `BlockLoader`, `BlockRegistry`, `Metabox\Metabox`, `OptionsPage`, `ThemeUpdater`, `Menu\Menu`, `Menu\MenuItem`, `Rest\SearchEndpoints`.
 
-Dev blocks live in `inc/Blocks/{Name}/{Name}.php` with namespace `TAW\Blocks\{Name}\{Name}`.
+Dev blocks live in `Blocks/{Name}/{Name}.php` with namespace `TAW\Blocks\{Name}\{Name}`.
 
 Two block types:
 - **MetaBlock** — owns metaboxes, fetches post_meta, rendered via `BlockRegistry::render('id')`
 - **Block** — presentational, receives props, rendered directly: `(new Button())->render([...])`
 
-Auto-discovery: `BlockLoader::loadAll()` scans `inc/Blocks/*/` — no manual registration needed.
+Auto-discovery: `BlockLoader::loadAll()` scans `Blocks/*/` — no manual registration needed.
 
 Asset loading: `BlockRegistry::queue('hero', 'stats')` BEFORE `get_header()` → assets land in `<head>`. Fallback prints inline if forgotten.
 
@@ -85,7 +85,7 @@ echo TAW\Helpers\Image::preload_tag($id, 'full'); // <link rel="preload">
 - Meta keys: `_taw_{field_id}`, option keys: `_taw_{field_id}`
 - Block assets: `style.css` (or `.scss`) and `script.js` — auto-enqueued
 - Templates: `index.php` receives `extract()`-ed variables from `getData()`
-- PSR-4: `TAW\` → `inc/` (so `TAW\Core\*` → `inc/Core/`, `TAW\Blocks\{Name}\{Name}` → `inc/Blocks/{Name}/{Name}.php`)
+- PSR-4: `TAW\` → `inc/` (so `TAW\Core\*` → `inc/Core/`, `TAW\Blocks\{Name}\{Name}` → `Blocks/{Name}/{Name}.php`)
 
 ## Metabox Field Types
 
@@ -94,7 +94,7 @@ echo TAW\Helpers\Image::preload_tag($id, 'full'); // <link rel="preload">
 ## When Creating New Blocks
 
 1. **CLI (preferred):** `php bin/taw make:block Name --type=meta --with-style`, then `composer dump-autoload`
-2. **Manual:** Create `inc/Blocks/{Name}/{Name}.php` and `inc/Blocks/{Name}/index.php` — auto-discovered, no `functions.php` changes
+2. **Manual:** Create `Blocks/{Name}/{Name}.php` and `Blocks/{Name}/index.php` — auto-discovered, no `functions.php` changes
 
 ## Don't
 

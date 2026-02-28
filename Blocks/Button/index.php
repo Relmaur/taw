@@ -1,6 +1,4 @@
 <?php
-// inc/Blocks/Button/index.php
-
 /**
  * @var string $text
  * @var string $url

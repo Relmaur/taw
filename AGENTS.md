@@ -12,7 +12,7 @@
 | `inc/Core/` | Framework internals — base classes, registry, loader, metabox engine |
 | `inc/Core/Menu/` | Navigation menu object model (`Menu`, `MenuItem`) |
 | `inc/Core/Rest/` | REST API endpoints (`SearchEndpoints`) |
-| `inc/Blocks/` | Dev block collection — one folder per block, auto-discovered |
+| `Blocks/` | Dev block collection — one folder per block, auto-discovered |
 | `inc/CLI/` | Symfony Console commands (`make:block`, `export:block`, `import:block`) |
 | `inc/Helpers/` | Utility helpers (`Image`) |
 | `inc/options.php` | Theme-level options page configuration |
@@ -48,7 +48,7 @@ BaseBlock (abstract)
 | `inc/Core/MetaBlock.php` | Extends BaseBlock. Registers metaboxes in constructor, provides `getData(int $postId)` and `render(?int $postId)` |
 | `inc/Core/Block.php` | Extends BaseBlock. Defines `defaults()` for props, provides `render(array $props)` |
 | `inc/Core/BlockRegistry.php` | Static registry for MetaBlocks. Supports `register()`, `queue()`, `render()`, `enqueueQueuedAssets()` |
-| `inc/Core/BlockLoader.php` | Auto-discovers all MetaBlock classes by scanning `inc/Blocks/*/` directories |
+| `inc/Core/BlockLoader.php` | Auto-discovers all MetaBlock classes by scanning `Blocks/*/` directories |
 | `inc/Core/Metabox/Metabox.php` | Configuration-driven metabox framework. Field registration, rendering, saving, and static retrieval helpers |
 | `inc/Core/OptionsPage.php` | Configuration-driven admin options page. Same field format as Metabox but stores to `wp_options` |
 | `inc/Core/ThemeUpdater.php` | GitHub Releases-based automatic theme updater |
@@ -62,17 +62,17 @@ BaseBlock (abstract)
 Every block follows this exact convention — the folder name **must** match the class name:
 
 ```
-inc/Blocks/{Name}/{Name}.php    → class TAW\Blocks\{Name}\{Name}
-inc/Blocks/{Name}/index.php     → Template file
-inc/Blocks/{Name}/style.css     → Optional stylesheet (or style.scss)
-inc/Blocks/{Name}/script.js     → Optional JavaScript
+Blocks/{Name}/{Name}.php    → class TAW\Blocks\{Name}\{Name}
+Blocks/{Name}/index.php     → Template file
+Blocks/{Name}/style.css     → Optional stylesheet (or style.scss)
+Blocks/{Name}/script.js     → Optional JavaScript
 ```
 
 Example:
 ```
-inc/Blocks/Hero/Hero.php        → class TAW\Blocks\Hero\Hero extends MetaBlock
-inc/Blocks/Hero/index.php       → Template receives extracted variables
-inc/Blocks/Hero/style.css       → Enqueued only when Hero renders
+Blocks/Hero/Hero.php        → class TAW\Blocks\Hero\Hero extends MetaBlock
+Blocks/Hero/index.php       → Template receives extracted variables
+Blocks/Hero/style.css       → Enqueued only when Hero renders
 ```
 
 BlockLoader relies on this convention for auto-discovery. Breaking it will silently skip the block.
@@ -131,7 +131,7 @@ get_header();
 
 ```php
 <?php
-// inc/Blocks/Features/Features.php
+// Blocks/Features/Features.php
 
 declare(strict_types=1);
 
@@ -174,7 +174,7 @@ class Features extends MetaBlock
 
 ```php
 <?php
-// inc/Blocks/Features/index.php
+// Blocks/Features/index.php
 
 /** @var string $heading */
 
@@ -205,7 +205,7 @@ The block auto-discovers and enqueues these when rendered. SCSS is prioritized o
 
 ```php
 <?php
-// inc/Blocks/Card/Card.php
+// Blocks/Card/Card.php
 
 declare(strict_types=1);
 
@@ -522,7 +522,7 @@ The async `media="print"` trick makes stylesheets non-render-blocking — the br
 | `resources/css/app.css` | Tailwind v4 (`@import "tailwindcss"`, `@source "../../**/*.php"`). Imported by `app.js`, **not** a standalone Vite entry. |
 | `resources/scss/app.scss` | Custom SCSS (fonts, global rules). Imported by `app.js`. |
 | `resources/scss/critical.scss` | Standalone Vite entry. Inlined into `<head>` by `vite_inline_critical_css()`. Must stay under ~14 KB. No `@font-face` here — inlined CSS resolves `url()` against the page origin, not a stylesheet location, causing 404s. |
-| `inc/Blocks/*/style.css` | Per-block styles. Auto-discovered by `vite.config.js`, separate Rollup entries. |
+| `Blocks/*/style.css` | Per-block styles. Auto-discovered by `vite.config.js`, separate Rollup entries. |
 
 ### Key Vite config decisions
 
@@ -558,9 +558,9 @@ vite_asset_url('resources/fonts/Roboto-Regular.woff2')
 
 `vite.config.js` auto-discovers block assets:
 ```js
-const componentAssets = readdirSync('inc/Blocks', { recursive: true })
+const componentAssets = readdirSync('Blocks', { recursive: true })
     .filter(f => f.endsWith('style.css') || f.endsWith('style.scss') || f.endsWith('script.js'))
-    .map(f => `inc/Blocks/${f}`);
+    .map(f => `Blocks/${f}`);
 ```
 
 These become separate Rollup entry points → separate cached files in production.
@@ -615,7 +615,7 @@ Namespace mapping:
 - `TAW\Core\Rest\SearchEndpoints` → `inc/Core/Rest/SearchEndpoints.php`
 - `TAW\Helpers\Image` → `inc/Helpers/Image.php`
 - `TAW\CLI\MakeBlockCommand` → `inc/CLI/MakeBlockCommand.php`
-- `TAW\Blocks\Hero\Hero` → `inc/Blocks/Hero/Hero.php`
+- `TAW\Blocks\Hero\Hero` → `Blocks/Hero/Hero.php`
 
 After adding new classes, run `composer dump-autoload` if autoloading fails.
 
@@ -661,7 +661,7 @@ protected function getData(int $postId): array
 
 ### Nesting UI blocks inside MetaBlocks
 ```php
-<!-- inc/Blocks/Hero/index.php -->
+<!-- Blocks/Hero/index.php -->
 <section class="hero">
     <h1><?php echo esc_html($heading); ?></h1>
     <?php if ($cta_text): ?>

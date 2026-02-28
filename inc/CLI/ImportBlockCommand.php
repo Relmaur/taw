@@ -15,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Import a block from a TAW block ZIP archive.
  *
  * Reads the block.json manifest, validates the package,
- * and extracts into inc/Blocks/.
+ * and extracts into Blocks/.
  */
 class ImportBlockCommand extends Command
 {
@@ -34,7 +34,7 @@ class ImportBlockCommand extends Command
             ->setDescription('Import a block from a TAW block ZIP')
             ->setHelp(<<<'HELP'
                 Extracts a block package (created by <info>export:block</info>)
-                into your theme's inc/Blocks/ directory.
+                into your theme's Blocks/ directory.
 
                 The ZIP must contain a block.json manifest.
 
@@ -101,7 +101,7 @@ class ImportBlockCommand extends Command
         }
 
         // --- Check for existing block ---
-        $targetDir = $this->themeDir . '/inc/Blocks/' . $name;
+        $targetDir = $this->themeDir . '/Blocks/' . $name;
 
         if (is_dir($targetDir) && !$force) {
             // Interactive confirmation — ask the user what to do.
@@ -118,9 +118,9 @@ class ImportBlockCommand extends Command
 
         // --- Extract ---
         // extractTo() extracts the entire ZIP maintaining folder structure.
-        // Since the ZIP contains {Name}/... and we extract to inc/Blocks/,
-        // the result is inc/Blocks/{Name}/... — exactly right.
-        $blocksDir = $this->themeDir . '/inc/Blocks';
+        // Since the ZIP contains {Name}/... and we extract to Blocks/,
+        // the result is Blocks/{Name}/... — exactly right.
+        $blocksDir = $this->themeDir . '/Blocks';
         $zip->extractTo($blocksDir);
         $zip->close();
 
@@ -136,7 +136,7 @@ class ImportBlockCommand extends Command
         $io->section('Next Steps');
         $io->listing([
             'Run <info>composer dump-autoload</info> to register the class',
-            'Review the block at <info>inc/Blocks/' . $name . '/</info>',
+            'Review the block at <info>Blocks/' . $name . '/</info>',
             'Check for any dependencies specific to the source project',
         ]);
 

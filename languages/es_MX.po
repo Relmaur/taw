@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TAW Theme\n"
 "POT-Creation-Date: 2026-02-27 21:54-0500\n"
-"PO-Revision-Date: 2026-02-27 22:03-0500\n"
+"PO-Revision-Date: 2026-02-28 00:10-0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es_MX\n"
@@ -57,115 +57,115 @@ msgstr "Menú principal"
 msgid "Skip to content"
 msgstr "Saltar al contenido"
 
-#: inc/Blocks/Hero/Hero.php:18 inc/Metabox/Hero/metabox-example.php:42
+#: Blocks/Hero/Hero.php:18 inc/Metabox/Hero/metabox-example.php:42
 msgid "Hero Section"
 msgstr "Sección Hero"
 
-#: inc/Blocks/Hero/Hero.php:23
+#: Blocks/Hero/Hero.php:23
 msgid "Heading"
 msgstr "Encabezado"
 
-#: inc/Blocks/Hero/Hero.php:30 inc/Metabox/Hero/metabox-example.php:65
+#: Blocks/Hero/Hero.php:30 inc/Metabox/Hero/metabox-example.php:65
 msgid "Tagline"
 msgstr "Eslogan"
 
-#: inc/Blocks/Hero/Hero.php:37 inc/Metabox/Hero/metabox-example.php:155
+#: Blocks/Hero/Hero.php:37 inc/Metabox/Hero/metabox-example.php:155
 msgid "Hero Image"
 msgstr "Imagen destacada"
 
-#: inc/Blocks/Hero/Hero.php:43
+#: Blocks/Hero/Hero.php:43
 msgid "Show Tagline"
 msgstr "Mostrar eslogan"
 
-#: inc/Blocks/Hero/Hero.php:45
+#: Blocks/Hero/Hero.php:45
 msgid "Enable or disable the tagline above the heading."
 msgstr "Activa o desactiva el eslogan que aparece encima del encabezado."
 
-#: inc/Blocks/Hero/Hero.php:50
+#: Blocks/Hero/Hero.php:50
 msgid "Hero Padding"
 msgstr "Espaciado"
 
-#: inc/Blocks/Hero/Hero.php:57
+#: Blocks/Hero/Hero.php:57
 msgid "Vertical padding for the hero section."
 msgstr "Relleno vertical para la sección principal."
 
-#: inc/Blocks/Hero/Hero.php:62
+#: Blocks/Hero/Hero.php:62
 msgid "Background Color"
 msgstr "Color de fondo"
 
-#: inc/Blocks/Hero/Hero.php:65
+#: Blocks/Hero/Hero.php:65
 msgid "Background color for the hero section."
 msgstr "Color de fondo para la sección principal."
 
-#: inc/Blocks/Hero/Hero.php:70
+#: Blocks/Hero/Hero.php:70
 msgid "Featured Post"
 msgstr "Publicación destacada"
 
-#: inc/Blocks/Hero/Hero.php:73
+#: Blocks/Hero/Hero.php:73
 msgid "Select a single post to feature."
 msgstr "Selecciona una sola publicación para destacar."
 
-#: inc/Blocks/Hero/Hero.php:78
+#: Blocks/Hero/Hero.php:78
 msgid "Related Posts"
 msgstr "Publicaciones relacionadas"
 
-#: inc/Blocks/Hero/Hero.php:83
+#: Blocks/Hero/Hero.php:83
 msgid "Select up to 5 related posts."
 msgstr "Selecciona hasta 5 publicaciones relacionadas."
 
-#: inc/Blocks/Hero/Hero.php:88
+#: Blocks/Hero/Hero.php:88
 msgid "Team Members"
 msgstr "Miembros del equipo"
 
-#: inc/Blocks/Hero/Hero.php:90
+#: Blocks/Hero/Hero.php:90
 msgid "Add Team Member"
 msgstr "Agregar Miembro del Equipo"
 
-#: inc/Blocks/Hero/Hero.php:95
+#: Blocks/Hero/Hero.php:95
 msgid "Name"
 msgstr "Nombre"
 
-#: inc/Blocks/Hero/Hero.php:97
+#: Blocks/Hero/Hero.php:97
 msgid "Full name"
 msgstr "Nombre completo"
 
-#: inc/Blocks/Hero/Hero.php:102
+#: Blocks/Hero/Hero.php:102
 msgid "Role"
 msgstr "Puesto"
 
-#: inc/Blocks/Hero/Hero.php:104
+#: Blocks/Hero/Hero.php:104
 msgid "e.g. Designer, Developer"
-msgstr "Por ejemplo, diseñador, desarrollador."
+msgstr "Por ejemplo, diseñador, desarrollador"
 
-#: inc/Blocks/Hero/Hero.php:109
+#: Blocks/Hero/Hero.php:109
 msgid "Bio"
 msgstr "Bio"
 
-#: inc/Blocks/Hero/Hero.php:115
+#: Blocks/Hero/Hero.php:115
 msgid "Photo"
 msgstr "Foto"
 
-#: inc/Blocks/Hero/Hero.php:121
+#: Blocks/Hero/Hero.php:121
 msgid "Group"
 msgstr "Grupo"
 
-#: inc/Blocks/Hero/Hero.php:126
+#: Blocks/Hero/Hero.php:126
 msgid "LinkedIn URL"
 msgstr "LinkedIn URL"
 
-#: inc/Blocks/Hero/Hero.php:133
+#: Blocks/Hero/Hero.php:133
 msgid "Twitter URL"
 msgstr "URL de Twitter"
 
-#: inc/Blocks/Hero/Hero.php:142
+#: Blocks/Hero/Hero.php:142
 msgid "Add your team members. Drag to reorder."
 msgstr "Agrega a los miembros de tu equipo. Arrastra para reordenar."
 
-#: inc/Blocks/Hero/index.php:35
+#: Blocks/Hero/index.php:35
 msgid "Get Started"
 msgstr "Empezar"
 
-#: inc/Blocks/Hero/index.php:36
+#: Blocks/Hero/index.php:36
 msgid "Learn More"
 msgstr "Saber más"
 
@@ -203,11 +203,11 @@ msgstr "Remover imagen"
 
 #: inc/Core/Metabox/Metabox.php:1088
 msgid "Search to add posts…"
-msgstr "Buscar para agregar publicaciones..."
+msgstr "Buscar para agregar publicaciones"
 
 #: inc/Core/Metabox/Metabox.php:1088
 msgid "Search for a post…"
-msgstr "Buscar una publicación..."
+msgstr "Buscar una publicación"
 
 #: inc/Core/Metabox/Metabox.php:1101
 msgid "Add Row"

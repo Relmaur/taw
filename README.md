@@ -42,7 +42,7 @@ Activate the theme in WordPress admin. You're building.
 
 ## Create a Block in 60 Seconds
 
-Every block is a folder inside `inc/Blocks/`. The folder name **must** match the class name — that's the only rule.
+Every block is a folder inside `Blocks/`. The folder name **must** match the class name — that's the only rule.
 
 ### Via CLI (recommended)
 
@@ -56,7 +56,7 @@ composer dump-autoload
 #### 1. The Class
 
 ```php
-// inc/Blocks/Hero/Hero.php
+// Blocks/Hero/Hero.php
 
 namespace TAW\Blocks\Hero;
 
@@ -93,7 +93,7 @@ class Hero extends MetaBlock
 #### 2. The Template
 
 ```php
-<!-- inc/Blocks/Hero/index.php -->
+<!-- Blocks/Hero/index.php -->
 
 <?php if (empty($heading)) return; ?>
 
@@ -139,7 +139,7 @@ That's it. No registration step. The block auto-discovers itself, its metabox ap
 UI Blocks compose naturally inside MetaBlocks:
 
 ```php
-<!-- inc/Blocks/Hero/index.php -->
+<!-- Blocks/Hero/index.php -->
 <section class="hero">
     <h1><?php echo esc_html($heading); ?></h1>
 
@@ -278,7 +278,7 @@ taw-theme/
 │   │   ├── MetaBlock.php      #   Data-owning blocks (metaboxes + post_meta)
 │   │   ├── Block.php          #   Presentational blocks (receives props)
 │   │   ├── BlockRegistry.php  #   Static registry — queue, enqueue, render
-│   │   ├── BlockLoader.php    #   Auto-discovers blocks by scanning inc/Blocks/
+│   │   ├── BlockLoader.php    #   Auto-discovers blocks by scanning Blocks/
 │   │   ├── OptionsPage.php    #   Config-driven admin options page (wp_options)
 │   │   ├── ThemeUpdater.php   #   GitHub Releases-based auto-updater
 │   │   ├── Metabox/

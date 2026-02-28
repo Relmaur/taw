@@ -60,7 +60,7 @@ class ExportBlockCommand extends Command
         $io   = new SymfonyStyle($input, $output);
         $name = $input->getArgument('name');
 
-        $blockDir = $this->themeDir . '/inc/Blocks/' . $name;
+        $blockDir = $this->themeDir . '/Blocks/' . $name;
 
         if (!is_dir($blockDir)) {
             $io->error("Block '{$name}' not found at {$blockDir}");
