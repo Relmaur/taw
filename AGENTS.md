@@ -10,7 +10,12 @@
 | Path | Purpose |
 |---|---|
 | `inc/Core/` | Framework internals — base classes, registry, loader, metabox engine |
+| `inc/Core/Menu/` | Navigation menu object model (`Menu`, `MenuItem`) |
+| `inc/Core/Rest/` | REST API endpoints (`SearchEndpoints`) |
 | `inc/Blocks/` | Dev block collection — one folder per block, auto-discovered |
+| `inc/CLI/` | Symfony Console commands (`make:block`, `export:block`, `import:block`) |
+| `inc/Helpers/` | Utility helpers (`Image`) |
+| `inc/options.php` | Theme-level options page configuration |
 | `inc/vite-loader.php` | Vite ↔ WordPress bridge (dev/prod, CSS pipeline, preloads) |
 | `inc/performance.php` | Resource hints, font preloads, WP frontend bloat removal |
 | `resources/js/app.js` | Alpine.js + global JS — imports Tailwind CSS and custom SCSS |
@@ -44,7 +49,13 @@ BaseBlock (abstract)
 | `inc/Core/Block.php` | Extends BaseBlock. Defines `defaults()` for props, provides `render(array $props)` |
 | `inc/Core/BlockRegistry.php` | Static registry for MetaBlocks. Supports `register()`, `queue()`, `render()`, `enqueueQueuedAssets()` |
 | `inc/Core/BlockLoader.php` | Auto-discovers all MetaBlock classes by scanning `inc/Blocks/*/` directories |
-| `inc/Core/Metabox.php` | Configuration-driven metabox framework. Field registration, rendering, saving, and static retrieval helpers |
+| `inc/Core/Metabox/Metabox.php` | Configuration-driven metabox framework. Field registration, rendering, saving, and static retrieval helpers |
+| `inc/Core/OptionsPage.php` | Configuration-driven admin options page. Same field format as Metabox but stores to `wp_options` |
+| `inc/Core/ThemeUpdater.php` | GitHub Releases-based automatic theme updater |
+| `inc/Core/Menu/Menu.php` | Navigation menu object model — wraps WP nav menus into a typed tree |
+| `inc/Core/Menu/MenuItem.php` | Individual menu item with typed getters (url, title, children, active state) |
+| `inc/Core/Rest/SearchEndpoints.php` | REST API: `GET taw/v1/search-posts` — post search for authenticated users |
+| `inc/Helpers/Image.php` | Performance-optimized `<img>` tag generator with above/below-fold attributes |
 
 ### Naming Convention (CRITICAL)
 
@@ -183,6 +194,11 @@ The block auto-discovers and enqueues these when rendered. SCSS is prioritized o
 
 `BlockLoader::loadAll()` auto-discovers the block. No changes to `functions.php` needed. Just `queue()` and `render()` it in a template.
 
+> **Shortcut:** Use the CLI scaffolder instead of writing files manually:
+> ```bash
+> php bin/taw make:block Features --type=meta --with-style
+> ```
+
 ---
 
 ## Creating a New UI Block
@@ -224,9 +240,9 @@ Usage in any template:
 
 ## The Metabox Framework
 
-Located in `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). Configuration-driven, supports:
+Located in `inc/Core/Metabox/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). Configuration-driven, supports:
 
-**Field types:** `text`, `textarea`, `wysiwyg`, `url`, `number`, `select`, `image`, `group`
+**Field types:** `text`, `textarea`, `wysiwyg`, `url`, `number`, `select`, `image`, `group`, `checkbox`, `color`, `repeater`, `post_selector`
 
 **Features:**
 - `show_on` callback for conditional display (e.g., front page only)
@@ -234,6 +250,10 @@ Located in `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). Config
 - `width` property for side-by-side fields (e.g., `'width' => '50'`)
 - `sanitize` => `'code'` for raw code snippet fields
 - `group` type for nested field groups (e.g., CTA with text + URL)
+- `repeater` type for dynamic repeatable row groups
+- `post_selector` type for selecting related posts via a search-as-you-type UI (uses `taw/v1/search-posts`)
+- `color` type renders a native color picker
+- `checkbox` type renders a boolean toggle
 
 **Meta key pattern:** `_taw_{field_id}` (prefix configurable, default `_taw_`)
 
@@ -242,6 +262,234 @@ Located in `inc/Core/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). Config
 Metabox::get(int $postId, string $fieldId, string $prefix = '_taw_'): mixed
 Metabox::get_image_url(int $postId, string $fieldId, string $size = 'full'): string
 ```
+
+---
+
+## Options Page
+
+Located in `inc/Core/OptionsPage.php` (namespace `TAW\Core\OptionsPage`).
+
+A configuration-driven admin settings page. Uses the **same field format as Metabox** but stores values in `wp_options` instead of `post_meta`. Supports tabs, all standard field types, and validation.
+
+**Usage:**
+```php
+new OptionsPage([
+    'id'         => 'taw_settings',
+    'title'      => 'TAW Settings',
+    'menu_title' => 'TAW Settings',
+    'icon'       => 'dashicons-screenoptions',
+    'position'   => 2,
+    'fields'     => [
+        ['id' => 'company_name',  'label' => 'Company Name',      'type' => 'text'],
+        ['id' => 'company_phone', 'label' => 'Phone Number',      'type' => 'text'],
+        ['id' => 'footer_text',   'label' => 'Footer Copyright',  'type' => 'textarea'],
+        ['id' => 'social_facebook', 'label' => 'Facebook URL',    'type' => 'url'],
+    ],
+    'tabs' => [
+        ['id' => 'general', 'label' => 'General', 'fields' => ['company_name', 'company_phone']],
+        ['id' => 'footer',  'label' => 'Footer',  'fields' => ['footer_text']],
+        ['id' => 'social',  'label' => 'Social',  'fields' => ['social_facebook']],
+    ],
+]);
+```
+
+**Retrieval:**
+```php
+OptionsPage::get('company_name');                    // returns string
+OptionsPage::get_image_url('company_logo', 'large'); // returns URL string
+```
+
+**Option key pattern:** `_taw_{field_id}` (same prefix convention as Metabox)
+
+The theme's default options page is configured in `inc/options.php` and required from `functions.php`. To add a new options page, create a new file in `inc/` and require it in `functions.php`.
+
+---
+
+## Navigation Menu System
+
+Located in `inc/Core/Menu/` (namespace `TAW\Core\Menu`).
+
+Wraps WordPress's flat nav menu data into a typed tree structure. Eliminates `wp_nav_menu()` in favour of full control over markup.
+
+**Classes:**
+- `Menu` — the menu container. Factory method `Menu::get(string $location)` retrieves and builds the tree.
+- `MenuItem` — a single item with typed getters.
+
+**Usage in templates:**
+```php
+<?php
+use TAW\Core\Menu\Menu;
+
+$menu = Menu::get('primary');
+if ($menu && $menu->hasItems()):
+?>
+<nav>
+    <ul>
+        <?php foreach ($menu->items() as $item): ?>
+            <li class="<?php echo $item->isActive() ? 'active' : ''; ?>">
+                <a href="<?php echo esc_url($item->url()); ?>"
+                   target="<?php echo esc_attr($item->target()); ?>">
+                    <?php echo esc_html($item->title()); ?>
+                </a>
+                <?php if ($item->hasChildren()): ?>
+                    <ul>
+                        <?php foreach ($item->children() as $child): ?>
+                            <li><a href="<?php echo esc_url($child->url()); ?>"><?php echo esc_html($child->title()); ?></a></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+</nav>
+<?php endif; ?>
+```
+
+**`MenuItem` API:**
+| Method | Returns | Description |
+|---|---|---|
+| `title()` | `string` | Display label |
+| `url()` | `string` | Destination URL |
+| `target()` | `string` | `_self` or `_blank` |
+| `openInNewTab()` | `bool` | True when target is `_blank` |
+| `isActive()` | `bool` | Current page |
+| `isActiveParent()` | `bool` | Direct parent of current page |
+| `isActiveAncestor()` | `bool` | Ancestor of current page |
+| `isInActiveTrail()` | `bool` | Any active state |
+| `hasChildren()` | `bool` | Has sub-items |
+| `children()` | `MenuItem[]` | Child items |
+| `classes()` | `string[]` | Custom classes (WP defaults stripped) |
+
+Menus must be registered in `functions.php` via `register_nav_menus()`. The theme registers `primary` and `footer` by default.
+
+---
+
+## REST API
+
+Located in `inc/Core/Rest/SearchEndpoints.php` (namespace `TAW\Core\Rest\SearchEndpoints`).
+
+Registered automatically in `functions.php` via `new TAW\Core\Rest\SearchEndpoints()`.
+
+### `GET taw/v1/search-posts`
+
+Search for posts across post types. Powers the `post_selector` metabox field type.
+
+**Permission:** Requires `edit_posts` capability (logged-in editors+).
+
+**Parameters:**
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `s` | string | `''` | Search string (matches post titles) |
+| `post_type` | string | `'post'` | Comma-separated post types (e.g. `post,page`) |
+| `per_page` | int | `10` | Results to return (1–50) |
+| `exclude` | string | `''` | Comma-separated post IDs to exclude |
+
+**Response:** Array of post objects with `id`, `title`, `post_type`, `status`, `date`, `edit_url`, `permalink`, `thumbnail`.
+
+---
+
+## CLI Tools
+
+Located in `inc/CLI/` (namespace `TAW\CLI`). Powered by Symfony Console. Entry point: `bin/taw`.
+
+### `make:block`
+
+Scaffold a new block with the correct folder structure, class, and template.
+
+```bash
+# Interactive (prompts for type)
+php bin/taw make:block MyBlock
+
+# Non-interactive
+php bin/taw make:block MyBlock --type=meta --with-style --with-script
+
+# UI block
+php bin/taw make:block Badge --type=ui
+
+# Overwrite existing
+php bin/taw make:block Hero --type=meta --force
+```
+
+| Option | Description |
+|---|---|
+| `--type=meta\|ui` | Block type (prompted if omitted) |
+| `--with-style` | Create a `style.scss` stub |
+| `--with-script` | Create a `script.js` stub |
+| `--force` / `-f` | Overwrite if block already exists |
+
+After scaffolding, run `composer dump-autoload` to register the new class.
+
+### `export:block`
+
+Export a block as a portable ZIP archive with a `block.json` manifest.
+
+```bash
+php bin/taw export:block Hero
+```
+
+### `import:block`
+
+Import a block from a ZIP archive exported by `export:block`.
+
+```bash
+php bin/taw import:block path/to/Hero.zip
+```
+
+---
+
+## Image Helper
+
+Located in `inc/Helpers/Image.php` (namespace `TAW\Helpers\Image`).
+
+Generates performance-optimised `<img>` tags with correct `loading`, `fetchpriority`, `decoding`, `srcset`, and `sizes` attributes based on whether the image is above or below the fold.
+
+```php
+use TAW\Helpers\Image;
+
+// Below the fold (default — most images)
+echo Image::render(get_post_thumbnail_id(), 'large', 'Alt text');
+
+// Above the fold (hero, banner) — eager + high priority
+echo Image::render($image_id, 'full', 'Hero image', [
+    'above_fold' => true,
+    'sizes'      => '100vw',
+    'class'      => 'w-full object-cover',
+]);
+
+// Generate a <link rel="preload"> tag for the hero image
+echo Image::preload_tag($image_id, 'full');
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `above_fold` | `bool` | `false` | Sets `loading="eager"` + `fetchpriority="high"` |
+| `sizes` | `string` | auto | Custom `sizes` attribute |
+| `class` | `string` | — | CSS class(es) |
+| `attr` | `array` | — | Any additional HTML attributes |
+
+---
+
+## Theme Updater
+
+Located in `inc/Core/ThemeUpdater.php` (namespace `TAW\Core\ThemeUpdater`).
+
+Hooks into WordPress's theme update system to pull releases from a GitHub repository. When a new tag is published, WordPress shows the standard "Update Available" notice and one-click update UI.
+
+Activated in `functions.php`:
+```php
+if (is_admin()) {
+    new \TAW\Core\ThemeUpdater([
+        'slug'       => 'taw-theme',
+        'github_url' => 'https://api.github.com/repos/YOUR_USERNAME/taw-theme/releases/latest',
+    ]);
+}
+```
+
+- Caches the GitHub API response for **6 hours** to avoid rate limits.
+- Prefers a built ZIP asset attached to the release; falls back to GitHub's auto-generated zipball.
+- Tag names are normalised: `v1.2.0` → `1.2.0`.
+- Only enabled in `is_admin()` context — no frontend overhead.
 
 ---
 
@@ -336,6 +584,7 @@ The `script_loader_tag` filter in `vite-loader.php` adds `type="module"` to:
 | Vite | v7 | Build tool + HMR |
 | SCSS | via `sass` | Optional per-block or global styles |
 | Composer | v2 | PSR-4 autoloading (`TAW\` → `inc/`) |
+| Symfony Console | — | CLI scaffolding commands (`bin/taw`) |
 
 ---
 
@@ -358,7 +607,14 @@ Namespace mapping:
 - `TAW\Core\Block` → `inc/Core/Block.php`
 - `TAW\Core\BlockRegistry` → `inc/Core/BlockRegistry.php`
 - `TAW\Core\BlockLoader` → `inc/Core/BlockLoader.php`
-- `TAW\Core\Metabox\Metabox` → `inc/Core/Metabox.php`
+- `TAW\Core\Metabox\Metabox` → `inc/Core/Metabox/Metabox.php`
+- `TAW\Core\OptionsPage` → `inc/Core/OptionsPage.php`
+- `TAW\Core\ThemeUpdater` → `inc/Core/ThemeUpdater.php`
+- `TAW\Core\Menu\Menu` → `inc/Core/Menu/Menu.php`
+- `TAW\Core\Menu\MenuItem` → `inc/Core/Menu/MenuItem.php`
+- `TAW\Core\Rest\SearchEndpoints` → `inc/Core/Rest/SearchEndpoints.php`
+- `TAW\Helpers\Image` → `inc/Helpers/Image.php`
+- `TAW\CLI\MakeBlockCommand` → `inc/CLI/MakeBlockCommand.php`
 - `TAW\Blocks\Hero\Hero` → `inc/Blocks/Hero/Hero.php`
 
 After adding new classes, run `composer dump-autoload` if autoloading fails.
@@ -373,6 +629,9 @@ After adding new classes, run `composer dump-autoload` if autoloading fails.
 | `npm run build` | Production build → `public/build/` |
 | `composer install` | Install PHP dependencies |
 | `composer dump-autoload` | Rebuild autoload classmap |
+| `php bin/taw make:block Name` | Scaffold a new block |
+| `php bin/taw export:block Name` | Export a block as a ZIP |
+| `php bin/taw import:block path.zip` | Import a block from a ZIP |
 
 ---
 
@@ -414,6 +673,25 @@ protected function getData(int $postId): array
 </section>
 ```
 
+### Reading theme options in templates
+```php
+use TAW\Core\OptionsPage;
+
+$phone = OptionsPage::get('company_phone');
+$logo  = OptionsPage::get_image_url('company_logo', 'medium');
+```
+
+### Rendering a performance-optimised image
+```php
+use TAW\Helpers\Image;
+
+// Hero (above the fold)
+echo Image::render($hero_image_id, 'full', 'Hero image', ['above_fold' => true]);
+
+// Card image (below the fold)
+echo Image::render($card_image_id, 'large', 'Card photo');
+```
+
 ---
 
 ## Do NOT
@@ -426,3 +704,4 @@ protected function getData(int $postId): array
 - Add `@font-face` / `@use 'fonts'` to `critical.scss` — inlined `<style>` tags resolve `url()` against the page origin, not the stylesheet, causing font 404s on any non-root install
 - Add `resources/css/app.css` back as a standalone Vite entry — it is imported by `app.js` and must not be a separate entry or it will compile twice
 - Set `base: './'` globally in `vite.config.js` — it must only apply to `build` (dev mode breaks with a relative base in cross-origin setups)
+- Use `wp_nav_menu()` — use `Menu::get('location')` instead for full markup control

@@ -12,9 +12,13 @@ No Gutenberg blocks. No ACF dependency. No bloat. Just PHP classes, templates, a
 
 **Zero-config blocks.** Create a folder, drop in a class and a template — it's live. No registration, no `functions.php` edits, no build step required for new blocks.
 
+**CLI scaffolding.** `php bin/taw make:block MyBlock --type=meta --with-style` creates the folder, class, template, and stylesheet in one command. Export and import blocks between projects as portable ZIPs.
+
 **Scoped asset loading.** Each block can ship its own CSS and JS. Assets are only enqueued on pages that use that block. Your homepage doesn't load your blog's scripts.
 
-**A real data layer.** MetaBlocks own their data through a bespoke metabox framework. No plugin dependencies for custom fields — field registration, rendering, and retrieval are built in.
+**A real data layer.** MetaBlocks own their data through a bespoke metabox framework. No plugin dependencies for custom fields — field registration, rendering, and retrieval are built in. Supports `text`, `textarea`, `wysiwyg`, `image`, `select`, `group`, `repeater`, `post_selector`, `color`, `checkbox`, and more.
+
+**Theme-level options.** `OptionsPage` brings the same config-driven field experience to site-wide settings stored in `wp_options` — tabbed UI, validation, and a clean retrieval API included.
 
 **Modern frontend, classic WordPress.** Tailwind v4 for utility CSS, Alpine.js for interactivity, Vite for instant HMR — all wired into WordPress through a lightweight bridge. No React, no REST API overhead.
 
@@ -40,7 +44,16 @@ Activate the theme in WordPress admin. You're building.
 
 Every block is a folder inside `inc/Blocks/`. The folder name **must** match the class name — that's the only rule.
 
-### 1. The Class
+### Via CLI (recommended)
+
+```bash
+php bin/taw make:block Hero --type=meta --with-style
+composer dump-autoload
+```
+
+### Manually
+
+#### 1. The Class
 
 ```php
 // inc/Blocks/Hero/Hero.php
@@ -77,7 +90,7 @@ class Hero extends MetaBlock
 }
 ```
 
-### 2. The Template
+#### 2. The Template
 
 ```php
 <!-- inc/Blocks/Hero/index.php -->
@@ -92,7 +105,7 @@ class Hero extends MetaBlock
 </section>
 ```
 
-### 3. Use It
+#### 3. Use It
 
 ```php
 <?php
@@ -178,6 +191,53 @@ get_header();
 
 ---
 
+## Theme Options
+
+`OptionsPage` provides site-wide settings stored in `wp_options` using the same field config format as metaboxes. Configured in `inc/options.php`.
+
+```php
+// Reading options anywhere in the theme
+use TAW\Core\OptionsPage;
+
+$phone = OptionsPage::get('company_phone');
+$logo  = OptionsPage::get_image_url('company_logo', 'medium');
+```
+
+---
+
+## Navigation Menus
+
+`Menu::get()` wraps WordPress nav menus into a typed tree — giving you full control over markup without `wp_nav_menu()`.
+
+```php
+use TAW\Core\Menu\Menu;
+
+$menu = Menu::get('primary');
+if ($menu && $menu->hasItems()) {
+    foreach ($menu->items() as $item) {
+        // $item->title(), $item->url(), $item->isActive(), $item->hasChildren() ...
+    }
+}
+```
+
+---
+
+## Performance-Optimised Images
+
+`TAW\Helpers\Image` generates `<img>` tags with the correct `loading`, `fetchpriority`, `decoding`, and `srcset` attributes based on whether the image is above or below the fold.
+
+```php
+use TAW\Helpers\Image;
+
+// Above-the-fold hero (eager, high priority)
+echo Image::render($hero_id, 'full', 'Hero image', ['above_fold' => true]);
+
+// Regular image (lazy, low priority — the default)
+echo Image::render(get_post_thumbnail_id(), 'large', 'Post thumbnail');
+```
+
+---
+
 ## Tech Stack
 
 | Technology | Role |
@@ -186,6 +246,7 @@ get_header();
 | [Alpine.js v3](https://alpinejs.dev/) | Lightweight reactivity for interactive components |
 | [Vite v7](https://vitejs.dev/) | Build tool with instant HMR in development |
 | [SCSS](https://sass-lang.com/) | Optional custom styles — global and per-block |
+| [Symfony Console](https://symfony.com/doc/current/components/console.html) | CLI scaffolding commands (`bin/taw`) |
 | PHP 7.4+ | PSR-4 autoloading via Composer |
 
 ### Architecture at a Glance
@@ -194,10 +255,14 @@ get_header();
 |---|---|
 | Autoloading | PSR-4 via Composer (`TAW\` → `inc/`) |
 | Block system | `BaseBlock` → `MetaBlock` / `Block` class hierarchy |
-| Metaboxes | Bespoke config-driven framework (`inc/Core/Metabox.php`) |
+| Metaboxes | Bespoke config-driven framework (`inc/Core/Metabox/Metabox.php`) |
+| Options page | Config-driven `OptionsPage` — stores to `wp_options` |
+| Navigation menus | `Menu` / `MenuItem` typed tree (`inc/Core/Menu/`) |
+| REST API | `taw/v1/search-posts` endpoint (`inc/Core/Rest/`) |
 | Asset pipeline | `inc/vite-loader.php` + `BlockRegistry` queue system |
 | Critical CSS | `critical.scss` compiled and inlined in `<head>` |
 | Fonts | Self-hosted WOFF2 with preloads via `inc/performance.php` |
+| Theme updates | GitHub Releases-based auto-updater (`inc/Core/ThemeUpdater.php`) |
 
 ---
 
@@ -205,6 +270,8 @@ get_header();
 
 ```
 taw-theme/
+├── bin/
+│   └── taw                    # CLI entry point (Symfony Console)
 ├── inc/
 │   ├── Core/                  # Framework internals (namespace TAW\Core)
 │   │   ├── BaseBlock.php      #   Abstract base — asset loading, template rendering
@@ -212,8 +279,23 @@ taw-theme/
 │   │   ├── Block.php          #   Presentational blocks (receives props)
 │   │   ├── BlockRegistry.php  #   Static registry — queue, enqueue, render
 │   │   ├── BlockLoader.php    #   Auto-discovers blocks by scanning inc/Blocks/
-│   │   └── Metabox.php        #   Config-driven metabox framework
+│   │   ├── OptionsPage.php    #   Config-driven admin options page (wp_options)
+│   │   ├── ThemeUpdater.php   #   GitHub Releases-based auto-updater
+│   │   ├── Metabox/
+│   │   │   └── Metabox.php    #   Config-driven metabox framework
+│   │   ├── Menu/
+│   │   │   ├── Menu.php       #   Nav menu tree factory
+│   │   │   └── MenuItem.php   #   Typed menu item with active-state helpers
+│   │   └── Rest/
+│   │       └── SearchEndpoints.php  # GET taw/v1/search-posts
+│   ├── CLI/                   # Symfony Console commands (namespace TAW\CLI)
+│   │   ├── MakeBlockCommand.php     # php bin/taw make:block
+│   │   ├── ExportBlockCommand.php   # php bin/taw export:block
+│   │   └── ImportBlockCommand.php   # php bin/taw import:block
+│   ├── Helpers/               # Utility helpers (namespace TAW\Helpers)
+│   │   └── Image.php          #   Performance-optimised <img> tag generator
 │   ├── Blocks/                # One folder per block — auto-discovered
+│   ├── options.php            # Theme options page configuration
 │   ├── vite-loader.php        # Vite ↔ WordPress bridge
 │   └── performance.php        # Resource hints, preloads, WP bloat removal
 ├── resources/
@@ -254,6 +336,9 @@ taw-theme/
 | `npm run build` | Production build → `public/build/` with hashed filenames |
 | `composer install` | Install PHP dependencies |
 | `composer dump-autoload` | Rebuild PSR-4 classmap after adding new classes |
+| `php bin/taw make:block Name` | Scaffold a new block (interactive if no flags) |
+| `php bin/taw export:block Name` | Export a block as a portable ZIP |
+| `php bin/taw import:block path.zip` | Import a block from a ZIP |
 
 ---
 
