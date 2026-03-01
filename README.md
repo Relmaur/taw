@@ -47,7 +47,7 @@ Activate the theme in WordPress admin. You're building.
 
 ---
 
-## Create a Block in 60 Seconds
+## Create a Block in 10 Seconds
 
 Every block is a folder inside `Blocks/`. The folder name **must** match the class name — that's the only rule.
 
