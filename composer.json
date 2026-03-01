@@ -21,7 +21,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/marcodelriego/taw-core"
+            "url": "https://github.com/Relmaur/taw-core"
         }
     ],
     "scripts": {
