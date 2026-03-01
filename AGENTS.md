@@ -9,15 +9,14 @@
 
 | Path | Purpose |
 |---|---|
-| `inc/Core/` | Framework internals — base classes, registry, loader, metabox engine |
-| `inc/Core/Menu/` | Navigation menu object model (`Menu`, `MenuItem`) |
-| `inc/Core/Rest/` | REST API endpoints (`SearchEndpoints`) |
+| `vendor/taw/core/src/Core/` | Framework internals — base classes, registry, loader, metabox engine (**read-only**, managed via composer) |
+| `vendor/taw/core/src/Core/Menu/` | Navigation menu object model (`Menu`, `MenuItem`) |
+| `vendor/taw/core/src/Core/Rest/` | REST API endpoints (`SearchEndpoints`) |
+| `vendor/taw/core/src/Helpers/` | Utility helpers (`Image`) |
+| `vendor/taw/core/src/CLI/` | Symfony Console commands (`make:block`, `export:block`, `import:block`) |
+| `vendor/taw/core/src/Support/` | `vite-loader.php`, `performance.php` — autoloaded by composer |
 | `Blocks/` | Dev block collection — one folder per block, auto-discovered |
-| `inc/CLI/` | Symfony Console commands (`make:block`, `export:block`, `import:block`) |
-| `inc/Helpers/` | Utility helpers (`Image`) |
 | `inc/options.php` | Theme-level options page configuration |
-| `inc/vite-loader.php` | Vite ↔ WordPress bridge (dev/prod, CSS pipeline, preloads) |
-| `inc/performance.php` | Resource hints, font preloads, WP frontend bloat removal |
 | `resources/js/app.js` | Alpine.js + global JS — imports Tailwind CSS and custom SCSS |
 | `resources/css/app.css` | Tailwind v4 directives (`@import "tailwindcss"`) — imported by `app.js` |
 | `resources/scss/app.scss` | Global custom SCSS (fonts, overrides) — imported by `app.js` |
@@ -25,6 +24,52 @@
 | `resources/scss/_fonts.scss` | `@font-face` declarations for self-hosted fonts |
 | `resources/fonts/` | Self-hosted WOFF2 font files |
 | `functions.php` | Theme bootstrap (minimal — delegates to block system) |
+
+> **Important:** `TAW\Core`, `TAW\Helpers`, and `TAW\CLI` classes live inside the `taw/core` composer package (`vendor/taw/core/src/`), **not** in `inc/`. The theme's `inc/` only holds `options.php` and any Metabox view templates. Do not edit files inside `vendor/`.
+
+---
+
+## The `taw/core` Package
+
+Framework internals are maintained as a standalone composer package at **`https://github.com/Relmaur/taw-core`** and installed at `vendor/taw/core/`.
+
+This separation means:
+- The core framework can be versioned and updated independently of any theme.
+- Themes declare a version constraint in `composer.json` (`"taw/core": "^1.0"`).
+- To pull a framework update: `composer update taw/core`.
+- To change framework behaviour, work in the `taw-core` repo, tag a release, then update the constraint here.
+
+**Package structure:**
+```
+vendor/taw/core/
+├── src/
+│   ├── Core/
+│   │   ├── Framework.php        # Path/URL resolver for the package (Taw::path(), Taw::themePath() …)
+│   │   ├── BaseBlock.php        # Abstract base — asset loading, template rendering
+│   │   ├── MetaBlock.php        # Data-owning blocks (metaboxes + post_meta)
+│   │   ├── Block.php            # Presentational blocks (receives props)
+│   │   ├── BlockRegistry.php    # Static registry — queue, enqueue, render
+│   │   ├── BlockLoader.php      # Auto-discovers blocks by scanning Blocks/
+│   │   ├── OptionsPage.php      # Config-driven admin options page (wp_options)
+│   │   ├── ThemeUpdater.php     # GitHub Releases-based auto-updater
+│   │   ├── Metabox/
+│   │   │   └── Metabox.php      # Config-driven metabox framework
+│   │   ├── Menu/
+│   │   │   ├── Menu.php         # Nav menu tree factory
+│   │   │   └── MenuItem.php     # Typed menu item with active-state helpers
+│   │   └── Rest/
+│   │       └── SearchEndpoints.php  # GET taw/v1/search-posts
+│   ├── CLI/                     # Symfony Console commands
+│   │   ├── MakeBlockCommand.php
+│   │   ├── ExportBlockCommand.php
+│   │   └── ImportBlockCommand.php
+│   ├── Helpers/
+│   │   └── Image.php            # Performance-optimised <img> tag generator
+│   └── Support/
+│       ├── vite-loader.php      # Vite ↔ WordPress bridge (autoloaded)
+│       └── performance.php      # Resource hints, font preloads, WP bloat removal (autoloaded)
+└── composer.json
+```
 
 ---
 
@@ -40,22 +85,23 @@ BaseBlock (abstract)
     └── Button, Card, Badge, etc.
 ```
 
-### Key Files
+### Key Classes (all from `taw/core`)
 
-| File | Role |
+| Class | Role |
 |---|---|
-| `inc/Core/BaseBlock.php` | Reflection-based auto-discovery of component directory, asset enqueuing (CSS/JS), template rendering via `extract()` |
-| `inc/Core/MetaBlock.php` | Extends BaseBlock. Registers metaboxes in constructor, provides `getData(int $postId)` and `render(?int $postId)` |
-| `inc/Core/Block.php` | Extends BaseBlock. Defines `defaults()` for props, provides `render(array $props)` |
-| `inc/Core/BlockRegistry.php` | Static registry for MetaBlocks. Supports `register()`, `queue()`, `render()`, `enqueueQueuedAssets()` |
-| `inc/Core/BlockLoader.php` | Auto-discovers all MetaBlock classes by scanning `Blocks/*/` directories |
-| `inc/Core/Metabox/Metabox.php` | Configuration-driven metabox framework. Field registration, rendering, saving, and static retrieval helpers |
-| `inc/Core/OptionsPage.php` | Configuration-driven admin options page. Same field format as Metabox but stores to `wp_options` |
-| `inc/Core/ThemeUpdater.php` | GitHub Releases-based automatic theme updater |
-| `inc/Core/Menu/Menu.php` | Navigation menu object model — wraps WP nav menus into a typed tree |
-| `inc/Core/Menu/MenuItem.php` | Individual menu item with typed getters (url, title, children, active state) |
-| `inc/Core/Rest/SearchEndpoints.php` | REST API: `GET taw/v1/search-posts` — post search for authenticated users |
-| `inc/Helpers/Image.php` | Performance-optimized `<img>` tag generator with above/below-fold attributes |
+| `TAW\Core\BaseBlock` | Reflection-based auto-discovery of component directory, asset enqueuing (CSS/JS), template rendering via `extract()` |
+| `TAW\Core\MetaBlock` | Extends BaseBlock. Registers metaboxes in constructor, provides `getData(int $postId)` and `render(?int $postId)` |
+| `TAW\Core\Block` | Extends BaseBlock. Defines `defaults()` for props, provides `render(array $props)` |
+| `TAW\Core\BlockRegistry` | Static registry for MetaBlocks. Supports `register()`, `queue()`, `render()`, `enqueueQueuedAssets()` |
+| `TAW\Core\BlockLoader` | Auto-discovers all MetaBlock classes by scanning `Blocks/*/` directories |
+| `TAW\Core\Framework` | Path/URL resolver. `Framework::path()` → package root; `Framework::themePath()` → active theme root |
+| `TAW\Core\Metabox\Metabox` | Configuration-driven metabox framework. Field registration, rendering, saving, and static retrieval helpers |
+| `TAW\Core\OptionsPage` | Configuration-driven admin options page. Same field format as Metabox but stores to `wp_options` |
+| `TAW\Core\ThemeUpdater` | GitHub Releases-based automatic theme updater |
+| `TAW\Core\Menu\Menu` | Navigation menu object model — wraps WP nav menus into a typed tree |
+| `TAW\Core\Menu\MenuItem` | Individual menu item with typed getters (url, title, children, active state) |
+| `TAW\Core\Rest\SearchEndpoints` | REST API: `GET taw/v1/search-posts` — post search for authenticated users |
+| `TAW\Helpers\Image` | Performance-optimized `<img>` tag generator with above/below-fold attributes |
 
 ### Naming Convention (CRITICAL)
 
@@ -240,7 +286,7 @@ Usage in any template:
 
 ## The Metabox Framework
 
-Located in `inc/Core/Metabox/Metabox.php` (namespace `TAW\Core\Metabox\Metabox`). Configuration-driven, supports:
+Provided by `taw/core` (namespace `TAW\Core\Metabox\Metabox`). Configuration-driven, supports:
 
 **Field types:** `text`, `textarea`, `wysiwyg`, `url`, `number`, `select`, `image`, `group`, `checkbox`, `color`, `repeater`, `post_selector`
 
@@ -267,7 +313,7 @@ Metabox::get_image_url(int $postId, string $fieldId, string $size = 'full'): str
 
 ## Options Page
 
-Located in `inc/Core/OptionsPage.php` (namespace `TAW\Core\OptionsPage`).
+Provided by `taw/core` (namespace `TAW\Core\OptionsPage`).
 
 A configuration-driven admin settings page. Uses the **same field format as Metabox** but stores values in `wp_options` instead of `post_meta`. Supports tabs, all standard field types, and validation.
 
@@ -307,7 +353,7 @@ The theme's default options page is configured in `inc/options.php` and required
 
 ## Navigation Menu System
 
-Located in `inc/Core/Menu/` (namespace `TAW\Core\Menu`).
+Provided by `taw/core` (namespace `TAW\Core\Menu`).
 
 Wraps WordPress's flat nav menu data into a typed tree structure. Eliminates `wp_nav_menu()` in favour of full control over markup.
 
@@ -366,7 +412,7 @@ Menus must be registered in `functions.php` via `register_nav_menus()`. The them
 
 ## REST API
 
-Located in `inc/Core/Rest/SearchEndpoints.php` (namespace `TAW\Core\Rest\SearchEndpoints`).
+Provided by `taw/core` (namespace `TAW\Core\Rest\SearchEndpoints`).
 
 Registered automatically in `functions.php` via `new TAW\Core\Rest\SearchEndpoints()`.
 
@@ -391,7 +437,7 @@ Search for posts across post types. Powers the `post_selector` metabox field typ
 
 ## CLI Tools
 
-Located in `inc/CLI/` (namespace `TAW\CLI`). Powered by Symfony Console. Entry point: `bin/taw`.
+Provided by `taw/core` (namespace `TAW\CLI`). Powered by Symfony Console. Entry point: `bin/taw`.
 
 ### `make:block`
 
@@ -440,7 +486,7 @@ php bin/taw import:block path/to/Hero.zip
 
 ## Image Helper
 
-Located in `inc/Helpers/Image.php` (namespace `TAW\Helpers\Image`).
+Provided by `taw/core` (namespace `TAW\Helpers\Image`).
 
 Generates performance-optimised `<img>` tags with correct `loading`, `fetchpriority`, `decoding`, `srcset`, and `sizes` attributes based on whether the image is above or below the fold.
 
@@ -472,7 +518,7 @@ echo Image::preload_tag($image_id, 'full');
 
 ## Theme Updater
 
-Located in `inc/Core/ThemeUpdater.php` (namespace `TAW\Core\ThemeUpdater`).
+Provided by `taw/core` (namespace `TAW\Core\ThemeUpdater`).
 
 Hooks into WordPress's theme update system to pull releases from a GitHub repository. When a new tag is published, WordPress shows the standard "Update Available" notice and one-click update UI.
 
@@ -497,7 +543,7 @@ if (is_admin()) {
 
 ### How it works
 
-`inc/vite-loader.php` detects whether the Vite dev server is running via `fsockopen()` on port 5173.
+`vite-loader.php` (from `taw/core`, autoloaded via composer `files`) detects whether the Vite dev server is running via `fsockopen()` on port 5173.
 
 - **Dev:** `app.js` (+ its CSS imports) served from `http://localhost:5173` with HMR
 - **Prod:** Reads `public/build/manifest.json` for hashed filenames
@@ -543,7 +589,7 @@ Forces Vite to embed the full dev server URL in injected CSS (e.g. `url('http://
 - Declare `@font-face` in `resources/scss/_fonts.scss` with `url('../fonts/Name.woff2')`
 - `@use 'fonts'` in `app.scss` (linked CSS) — Vite rewrites the URL correctly
 - **Never** `@use 'fonts'` in `critical.scss` — inlined styles can't resolve relative asset paths
-- Register preloads in `inc/performance.php` via `vite_asset_url('resources/fonts/Name.woff2')` — this returns the dev server URL in dev and the hashed build URL in prod
+- Register preloads via `vite_asset_url('resources/fonts/Name.woff2')` — returns dev server URL in dev and hashed build URL in prod
 
 ### Helper: `vite_asset_url(string $path): string`
 
@@ -578,46 +624,57 @@ The `script_loader_tag` filter in `vite-loader.php` adds `type="module"` to:
 | Technology | Version | Purpose |
 |---|---|---|
 | WordPress | 6.0+ | CMS |
-| PHP | 7.4+ | Server-side |
+| PHP | 8.1+ | Server-side |
 | Tailwind CSS | v4 | Utility-first CSS (via `@tailwindcss/vite`) |
 | Alpine.js | v3 | Lightweight JS reactivity |
 | Vite | v7 | Build tool + HMR |
 | SCSS | via `sass` | Optional per-block or global styles |
-| Composer | v2 | PSR-4 autoloading (`TAW\` → `inc/`) |
+| Composer | v2 | PSR-4 autoloading + `taw/core` package management |
 | Symfony Console | — | CLI scaffolding commands (`bin/taw`) |
 
 ---
 
 ## PSR-4 Autoloading
 
-Defined in `composer.json`:
+**Theme's `composer.json`** only registers theme-specific classes:
 ```json
 {
     "autoload": {
         "psr-4": {
-            "TAW\\": "inc/"
+            "TAW\\Blocks\\": "Blocks/"
         }
     }
 }
 ```
 
-Namespace mapping:
-- `TAW\Core\BaseBlock` → `inc/Core/BaseBlock.php`
-- `TAW\Core\MetaBlock` → `inc/Core/MetaBlock.php`
-- `TAW\Core\Block` → `inc/Core/Block.php`
-- `TAW\Core\BlockRegistry` → `inc/Core/BlockRegistry.php`
-- `TAW\Core\BlockLoader` → `inc/Core/BlockLoader.php`
-- `TAW\Core\Metabox\Metabox` → `inc/Core/Metabox/Metabox.php`
-- `TAW\Core\OptionsPage` → `inc/Core/OptionsPage.php`
-- `TAW\Core\ThemeUpdater` → `inc/Core/ThemeUpdater.php`
-- `TAW\Core\Menu\Menu` → `inc/Core/Menu/Menu.php`
-- `TAW\Core\Menu\MenuItem` → `inc/Core/Menu/MenuItem.php`
-- `TAW\Core\Rest\SearchEndpoints` → `inc/Core/Rest/SearchEndpoints.php`
-- `TAW\Helpers\Image` → `inc/Helpers/Image.php`
-- `TAW\CLI\MakeBlockCommand` → `inc/CLI/MakeBlockCommand.php`
+**`taw/core` package** registers everything else:
+```json
+{
+    "autoload": {
+        "psr-4": { "TAW\\": "src/" },
+        "files": ["src/Support/vite-loader.php", "src/Support/performance.php"]
+    }
+}
+```
+
+Effective namespace mapping (combined):
+- `TAW\Core\BaseBlock` → `vendor/taw/core/src/Core/BaseBlock.php`
+- `TAW\Core\MetaBlock` → `vendor/taw/core/src/Core/MetaBlock.php`
+- `TAW\Core\Block` → `vendor/taw/core/src/Core/Block.php`
+- `TAW\Core\BlockRegistry` → `vendor/taw/core/src/Core/BlockRegistry.php`
+- `TAW\Core\BlockLoader` → `vendor/taw/core/src/Core/BlockLoader.php`
+- `TAW\Core\Framework` → `vendor/taw/core/src/Core/Framework.php`
+- `TAW\Core\Metabox\Metabox` → `vendor/taw/core/src/Core/Metabox/Metabox.php`
+- `TAW\Core\OptionsPage` → `vendor/taw/core/src/Core/OptionsPage.php`
+- `TAW\Core\ThemeUpdater` → `vendor/taw/core/src/Core/ThemeUpdater.php`
+- `TAW\Core\Menu\Menu` → `vendor/taw/core/src/Core/Menu/Menu.php`
+- `TAW\Core\Menu\MenuItem` → `vendor/taw/core/src/Core/Menu/MenuItem.php`
+- `TAW\Core\Rest\SearchEndpoints` → `vendor/taw/core/src/Core/Rest/SearchEndpoints.php`
+- `TAW\Helpers\Image` → `vendor/taw/core/src/Helpers/Image.php`
+- `TAW\CLI\MakeBlockCommand` → `vendor/taw/core/src/CLI/MakeBlockCommand.php`
 - `TAW\Blocks\Hero\Hero` → `Blocks/Hero/Hero.php`
 
-After adding new classes, run `composer dump-autoload` if autoloading fails.
+After adding new block classes, run `composer dump-autoload`.
 
 ---
 
@@ -627,8 +684,9 @@ After adding new classes, run `composer dump-autoload` if autoloading fails.
 |---|---|
 | `npm run dev` | Start Vite dev server (port 5173) with HMR |
 | `npm run build` | Production build → `public/build/` |
-| `composer install` | Install PHP dependencies |
-| `composer dump-autoload` | Rebuild autoload classmap |
+| `composer install` | Install PHP dependencies (including `taw/core`) |
+| `composer update taw/core` | Pull the latest framework package update |
+| `composer dump-autoload` | Rebuild autoload classmap (after adding new blocks) |
 | `php bin/taw make:block Name` | Scaffold a new block |
 | `php bin/taw export:block Name` | Export a block as a ZIP |
 | `php bin/taw import:block path.zip` | Import a block from a ZIP |
@@ -705,3 +763,5 @@ echo Image::render($card_image_id, 'large', 'Card photo');
 - Add `resources/css/app.css` back as a standalone Vite entry — it is imported by `app.js` and must not be a separate entry or it will compile twice
 - Set `base: './'` globally in `vite.config.js` — it must only apply to `build` (dev mode breaks with a relative base in cross-origin setups)
 - Use `wp_nav_menu()` — use `Menu::get('location')` instead for full markup control
+- Edit files inside `vendor/taw/core/` directly — changes will be overwritten by `composer update`. Work in the `taw-core` repo instead
+- Look for `TAW\Core` or `TAW\Helpers` classes in `inc/` — they live in `vendor/taw/core/src/`

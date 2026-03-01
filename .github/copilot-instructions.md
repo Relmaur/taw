@@ -6,14 +6,22 @@
 
 A classic WordPress theme with a custom block system, Vite v7, Tailwind v4, Alpine.js, and a bespoke metabox framework.
 
+## Core Package
+
+Framework internals (`TAW\Core`, `TAW\Helpers`, `TAW\CLI`) live in the **`taw/core` composer package**, installed at `vendor/taw/core/src/`. The theme's own `inc/` only contains `options.php` and Metabox view templates. **Do not look for `TAW\Core` classes in `inc/`**, and do not edit anything inside `vendor/`.
+
+To update the framework: `composer update taw/core`.
+
 ## Key Architecture
 
-- Framework internals in `inc/Core/` (namespace `TAW\Core`): `BaseBlock`, `Block`, `MetaBlock`, `BlockLoader`, `BlockRegistry`, `Metabox\Metabox`, `OptionsPage`, `ThemeUpdater`, `Menu\Menu`, `Menu\MenuItem`, `Rest\SearchEndpoints`
+- Framework classes (`BaseBlock`, `Block`, `MetaBlock`, `BlockLoader`, `BlockRegistry`, `Metabox\Metabox`, `OptionsPage`, `ThemeUpdater`, `Menu\Menu`, `Menu\MenuItem`, `Rest\SearchEndpoints`) — all in `vendor/taw/core/src/Core/` (namespace `TAW\Core`)
+- `TAW\Helpers\Image` — in `vendor/taw/core/src/Helpers/`
+- `vite-loader.php` and `performance.php` — in `vendor/taw/core/src/Support/`, autoloaded by composer
 - Dev blocks: `Blocks/{Name}/{Name}.php` — folder name must match class name, namespace `TAW\Blocks\{Name}\{Name}`
+- Theme PSR-4: `TAW\Blocks\` → `Blocks/` only (everything else comes from `taw/core`)
 - Two types: **MetaBlock** (data-owning, uses metaboxes) and **Block** (presentational, receives props)
 - Auto-discovery via `BlockLoader::loadAll()` — no manual registration
 - Asset queueing: `BlockRegistry::queue()` before `get_header()`, then `BlockRegistry::render()` in body
-- PSR-4: `TAW\` → `inc/`
 
 ## New Blocks
 
@@ -22,7 +30,7 @@ Or manually create `Blocks/{Name}/{Name}.php` + `Blocks/{Name}/index.php` — no
 
 ## Options Page
 
-`OptionsPage` stores site-wide settings in `wp_options` with the same field config as Metabox.
+`OptionsPage` (from `taw/core`) stores site-wide settings in `wp_options` with the same field config as Metabox.
 - Configured in `inc/options.php`
 - Retrieve: `OptionsPage::get('field_id')`, `OptionsPage::get_image_url('field_id', 'size')`
 
@@ -44,8 +52,8 @@ Use `TAW\Core\Menu\Menu::get('location')` instead of `wp_nav_menu()` — returns
 - `resources/scss/critical.scss` is a standalone Vite entry compiled and **inlined** in `<head>` — keep under ~14 KB, no `@font-face` inside it
 - Main CSS loads asynchronously (non-render-blocking via `media="print"`) in production
 - Self-hosted fonts live in `resources/fonts/`; `@font-face` goes in `resources/scss/_fonts.scss`, used via `@use 'fonts'` in `app.scss` only
-- `vite_asset_url()` in `inc/vite-loader.php` resolves font/asset paths correctly in both dev and prod
-- Add font preloads in `inc/performance.php` via `vite_asset_url()`
+- `vite_asset_url()` resolves font/asset paths correctly in both dev and prod (function provided by `taw/core`)
+- Add font preloads via `vite_asset_url()` — the helper is autoloaded from `vendor/taw/core/src/Support/vite-loader.php`
 
 ## When generating code
 
@@ -57,3 +65,4 @@ Use `TAW\Core\Menu\Menu::get('location')` instead of `wp_nav_menu()` — returns
 - Styles: Tailwind utilities in templates, custom CSS/SCSS in block's `style.css`/`style.scss`
 - Never add block registrations to `functions.php`
 - Never use `wp_nav_menu()` — use `Menu::get('location')` instead
+- Never edit files inside `vendor/taw/core/` — changes will be lost on the next `composer update`

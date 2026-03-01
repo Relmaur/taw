@@ -2,12 +2,23 @@ You are working on TAW Theme — a classic WordPress theme with a custom block a
 
 Full architecture docs: see AGENTS.md in the repo root.
 
+## Core Package
+
+Framework internals live in the `taw/core` composer package at `vendor/taw/core/src/` — NOT in `inc/`.
+- `TAW\Core\*` → `vendor/taw/core/src/Core/`
+- `TAW\Helpers\*` → `vendor/taw/core/src/Helpers/`
+- `TAW\CLI\*` → `vendor/taw/core/src/CLI/`
+- `vite-loader.php` and `performance.php` → `vendor/taw/core/src/Support/` (autoloaded by composer)
+- The theme's `inc/` only has `options.php` and Metabox view templates
+
+Do NOT edit anything inside `vendor/taw/core/`. To update the framework: `composer update taw/core`.
+
 Key rules:
 - Blocks live in Blocks/{Name}/{Name}.php — folder MUST match class name
 - MetaBlock = data-owning (metaboxes + post_meta), Block = presentational (props)
 - Auto-discovery via BlockLoader::loadAll() — never register manually in functions.php
 - Template pattern: BlockRegistry::queue() before get_header(), render() in body
-- PSR-4: TAW\ maps to inc/
+- PSR-4 (theme): TAW\Blocks\ → Blocks/ only — all other TAW\ classes come from taw/core
 - Stack: WordPress, Tailwind v4, Alpine.js v3, Vite v7, SCSS, bespoke Metabox framework
 - Always escape output: esc_html(), esc_url(), esc_attr()
 - Meta key pattern: _taw_{field_id}; option key pattern: _taw_{field_id}
@@ -17,7 +28,7 @@ New blocks:
 - Or manually create Blocks/{Name}/{Name}.php + index.php (no functions.php changes)
 
 Options page:
-- OptionsPage stores site settings in wp_options, same field config as Metabox
+- OptionsPage (from taw/core) stores site settings in wp_options, same field config as Metabox
 - Configured in inc/options.php; retrieve with OptionsPage::get('field_id')
 
 Navigation menus:
