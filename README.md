@@ -31,7 +31,12 @@ The framework internals (block system, metabox engine, Vite bridge) ship as the 
 ## Quick Start
 
 ```bash
-cd wp-content/themes/taw-theme
+
+# Move to themes directory of your WordPress installation
+cd wp-content/themes/
+
+# This command will create the starter theme with the correct structure and dependencies. Replace <theme_name> with your desired theme folder name.
+composer create-project taw/theme <theme_name>  --repository='{"type":"vcs","url":"https://github.com/Relmaur/taw-theme"}'
 
 composer install       # PHP deps — pulls taw/core framework package
 npm install            # Frontend dependencies
@@ -129,12 +134,12 @@ That's it. No registration step. The block auto-discovers itself, its metabox ap
 
 ## Two Types of Blocks
 
-| | MetaBlock | Block |
-|---|---|---|
-| **Purpose** | Page sections that own their data | Reusable UI components |
-| **Data source** | Metaboxes → `post_meta` | Props passed at render time |
-| **Rendered via** | `BlockRegistry::render('id')` | `(new Button())->render([...])` |
-| **Examples** | Hero, Stats, Testimonials, CTA | Button, Card, Badge |
+|                  | MetaBlock                         | Block                           |
+| ---------------- | --------------------------------- | ------------------------------- |
+| **Purpose**      | Page sections that own their data | Reusable UI components          |
+| **Data source**  | Metaboxes → `post_meta`           | Props passed at render time     |
+| **Rendered via** | `BlockRegistry::render('id')`     | `(new Button())->render([...])` |
+| **Examples**     | Hero, Stats, Testimonials, CTA    | Button, Card, Badge             |
 
 ### Nesting Blocks
 
@@ -242,31 +247,31 @@ echo Image::render(get_post_thumbnail_id(), 'large', 'Post thumbnail');
 
 ## Tech Stack
 
-| Technology | Role |
-|---|---|
-| [Tailwind CSS v4](https://tailwindcss.com/) | Utility-first CSS via the official Vite plugin |
-| [Alpine.js v3](https://alpinejs.dev/) | Lightweight reactivity for interactive components |
-| [Vite v7](https://vitejs.dev/) | Build tool with instant HMR in development |
-| [SCSS](https://sass-lang.com/) | Optional custom styles — global and per-block |
+| Technology                                                                 | Role                                                             |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [Tailwind CSS v4](https://tailwindcss.com/)                                | Utility-first CSS via the official Vite plugin                   |
+| [Alpine.js v3](https://alpinejs.dev/)                                      | Lightweight reactivity for interactive components                |
+| [Vite v7](https://vitejs.dev/)                                             | Build tool with instant HMR in development                       |
+| [SCSS](https://sass-lang.com/)                                             | Optional custom styles — global and per-block                    |
 | [Symfony Console](https://symfony.com/doc/current/components/console.html) | CLI scaffolding commands (`bin/taw`) — shipped inside `taw/core` |
-| PHP 8.1+ | PSR-4 autoloading via Composer |
-| [`taw/core`](https://github.com/Relmaur/taw-core) | Versioned composer package containing all framework internals |
+| PHP 8.1+                                                                   | PSR-4 autoloading via Composer                                   |
+| [`taw/core`](https://github.com/Relmaur/taw-core)                          | Versioned composer package containing all framework internals    |
 
 ### Architecture at a Glance
 
-| Concept | Implementation |
-|---|---|
-| Autoloading | PSR-4 via Composer — `TAW\Blocks\` → `Blocks/` (theme); everything else from `taw/core` |
-| Block system | `BaseBlock` → `MetaBlock` / `Block` class hierarchy (in `taw/core`) |
-| Metaboxes | Bespoke config-driven framework (`TAW\Core\Metabox\Metabox` in `taw/core`) |
-| Options page | Config-driven `OptionsPage` — stores to `wp_options` (in `taw/core`) |
-| Navigation menus | `Menu` / `MenuItem` typed tree (`TAW\Core\Menu` in `taw/core`) |
-| REST API | `taw/v1/search-posts` endpoint (`TAW\Core\Rest` in `taw/core`) |
-| Asset pipeline | `vite-loader.php` (autoloaded from `taw/core`) + `BlockRegistry` queue system |
-| Critical CSS | `critical.scss` compiled and inlined in `<head>` |
-| Fonts | Self-hosted WOFF2 with preloads via `performance.php` (autoloaded from `taw/core`) |
-| Theme updates | GitHub Releases-based auto-updater (`TAW\Core\ThemeUpdater` in `taw/core`) |
-| Framework updates | `composer update taw/core` — update across all sites independently |
+| Concept           | Implementation                                                                          |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| Autoloading       | PSR-4 via Composer — `TAW\Blocks\` → `Blocks/` (theme); everything else from `taw/core` |
+| Block system      | `BaseBlock` → `MetaBlock` / `Block` class hierarchy (in `taw/core`)                     |
+| Metaboxes         | Bespoke config-driven framework (`TAW\Core\Metabox\Metabox` in `taw/core`)              |
+| Options page      | Config-driven `OptionsPage` — stores to `wp_options` (in `taw/core`)                    |
+| Navigation menus  | `Menu` / `MenuItem` typed tree (`TAW\Core\Menu` in `taw/core`)                          |
+| REST API          | `taw/v1/search-posts` endpoint (`TAW\Core\Rest` in `taw/core`)                          |
+| Asset pipeline    | `vite-loader.php` (autoloaded from `taw/core`) + `BlockRegistry` queue system           |
+| Critical CSS      | `critical.scss` compiled and inlined in `<head>`                                        |
+| Fonts             | Self-hosted WOFF2 with preloads via `performance.php` (autoloaded from `taw/core`)      |
+| Theme updates     | GitHub Releases-based auto-updater (`TAW\Core\ThemeUpdater` in `taw/core`)              |
+| Framework updates | `composer update taw/core` — update across all sites independently                      |
 
 ---
 
@@ -312,27 +317,27 @@ taw-theme/
 ## Requirements
 
 | Dependency | Version |
-|---|---|
-| WordPress | 6.0+ |
-| PHP | 8.1+ |
-| Composer | 2.0+ |
-| Node.js | 20.19+ |
-| npm | 8+ |
+| ---------- | ------- |
+| WordPress  | 6.0+    |
+| PHP        | 8.1+    |
+| Composer   | 2.0+    |
+| Node.js    | 20.19+  |
+| npm        | 8+      |
 
 ---
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start Vite dev server (port 5173) with HMR |
-| `npm run build` | Production build → `public/build/` with hashed filenames |
-| `composer install` | Install PHP dependencies (including `taw/core`) |
-| `composer update taw/core` | Pull the latest framework update |
-| `composer dump-autoload` | Rebuild PSR-4 classmap after adding new block classes |
-| `php bin/taw make:block Name` | Scaffold a new block (interactive if no flags) |
-| `php bin/taw export:block Name` | Export a block as a portable ZIP |
-| `php bin/taw import:block path.zip` | Import a block from a ZIP |
+| Command                             | Description                                              |
+| ----------------------------------- | -------------------------------------------------------- |
+| `npm run dev`                       | Start Vite dev server (port 5173) with HMR               |
+| `npm run build`                     | Production build → `public/build/` with hashed filenames |
+| `composer install`                  | Install PHP dependencies (including `taw/core`)          |
+| `composer update taw/core`          | Pull the latest framework update                         |
+| `composer dump-autoload`            | Rebuild PSR-4 classmap after adding new block classes    |
+| `php bin/taw make:block Name`       | Scaffold a new block (interactive if no flags)           |
+| `php bin/taw export:block Name`     | Export a block as a portable ZIP                         |
+| `php bin/taw import:block path.zip` | Import a block from a ZIP                                |
 
 ---
 
