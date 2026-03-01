@@ -431,3 +431,18 @@ div[class|="postbox"]:not(:has(#side-sortables))
   font-weight: bold;
   margin-left: 2px;
 }
+
+.taw-options-page {
+  .taw-tabbed {
+    .tabs {
+      margin: 1rem 0;
+      border-bottom: none;
+    }
+    .tabs .tab-title {
+      border: 1px solid lightgray;
+    }
+    .tabs .tab-title:not(:last-child) {
+      border-right: none;
+    }
+  }
+}

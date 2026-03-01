@@ -9,9 +9,9 @@ new OptionsPage([
     'icon'       => 'dashicons-screenoptions',
     'position'   => 2,
     'fields'     => [
-        ['id' => 'company_name',  'label' => __('Company Name', 'taw-theme'),      'type' => 'text'],
-        ['id' => 'company_phone', 'label' => __('Phone Number', 'taw-theme'),      'type' => 'text'],
-        ['id' => 'company_email', 'label' => __('Email Address', 'taw-theme'),     'type' => 'text'],
+        ['id' => 'company_name',  'label' => __('Company Name', 'taw-theme'),      'type' => 'text', 'width' => '33.33'],
+        ['id' => 'company_phone', 'label' => __('Phone Number', 'taw-theme'),      'type' => 'text', 'width' => '33.33'],
+        ['id' => 'company_email', 'label' => __('Email Address', 'taw-theme'),     'type' => 'text', 'width' => '33.33'],
         ['id' => 'footer_text',   'label' => __('Footer Copyright', 'taw-theme'),  'type' => 'textarea'],
         ['id' => 'social_facebook',  'label' => __('Facebook URL', 'taw-theme'),   'type' => 'url'],
         ['id' => 'social_instagram', 'label' => __('Instagram URL', 'taw-theme'),  'type' => 'url'],

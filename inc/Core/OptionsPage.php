@@ -49,6 +49,30 @@ class OptionsPage
 
         add_action('admin_menu', [$this, 'register_page']);
         add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+    }
+
+    public function enqueue_admin_assets(string $hook): void
+    {
+        if ($hook !== 'toplevel_page_' . $this->id) {
+            return;
+        }
+
+        // Enqueue Alpine
+        wp_enqueue_script(
+            'alpinejs',
+            'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
+            [],
+            '3.0',
+            true
+        );
+
+        wp_enqueue_style(
+            'taw-metaboxes',
+            get_template_directory_uri() . '/inc/Core/admin.css',
+            [],
+            '1.0'
+        );
     }
 
     /**

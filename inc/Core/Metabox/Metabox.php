@@ -128,7 +128,7 @@ class Metabox
 
         wp_enqueue_style(
             'taw-metaboxes',
-            get_template_directory_uri() . '/inc/Core/Metabox/style.css',
+            get_template_directory_uri() . '/inc/Core/admin.css',
             [],
             '1.0'
         );
