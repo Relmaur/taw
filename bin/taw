@@ -9,13 +9,26 @@
  *   php bin/taw list
  *   php bin/taw help make:block
  *
- * This is a standalone tool — it does NOT require WordPress to be loaded.
- * It uses Symfony Console for a rich, self-documenting CLI experience.
+ * PORTABILITY NOTE:
+ * -----------------
+ * This file lives in the THEME (skeleton), not in the core package.
+ * It's the glue between the two: it knows the theme root (dirname(__DIR__))
+ * and passes it to each CLI command via constructor injection.
+ *
+ * The CLI commands live in vendor/taw/core/ and have NO idea where the
+ * theme is — they just use whatever $themeDir they receive.
+ *
+ * This separation means:
+ *   - Core commands can be updated via `composer update taw/core`
+ *   - The theme root is always correct regardless of core's location
+ *   - WordPress doesn't need to be loaded
  */
 
-// Find the Composer autoloader.
-// We walk up from bin/ to the theme root where vendor/ lives.
-$autoload = dirname(__DIR__) . '/vendor/autoload.php';
+// Theme root = the directory containing bin/
+$themeDir = dirname(__DIR__);
+
+// Find the Composer autoloader
+$autoload = $themeDir . '/vendor/autoload.php';
 
 if (!file_exists($autoload)) {
     fwrite(STDERR, "Run 'composer install' first.\n");
@@ -24,20 +37,21 @@ if (!file_exists($autoload)) {
 
 require $autoload;
 
+// Tell the Framework where the theme is (for any code that needs it in CLI context)
+TAW\Core\Framework::setThemeRoot($themeDir);
+
 use Symfony\Component\Console\Application;
 use TAW\CLI\MakeBlockCommand;
 use TAW\CLI\ExportBlockCommand;
 use TAW\CLI\ImportBlockCommand;
 
-// Create the application
-// The two arguments are: name and version.
-// Symfony uses these in the --version flag and help screens.
 $app = new Application('TAW CLI', '1.0.0');
 
-// Register commands
-$app->add(new MakeBlockCommand());
-$app->add(new ExportBlockCommand());
-$app->add(new ImportBlockCommand());
+// Inject the theme root into each command
+// This is dependency injection — the command doesn't know where it lives,
+// the caller (this file) tells it where to operate.
+$app->add(new MakeBlockCommand($themeDir));
+$app->add(new ExportBlockCommand($themeDir));
+$app->add(new ImportBlockCommand($themeDir));
 
-// Run it — Symfony handles argument parsing, --help, errors, etc.
 $app->run();

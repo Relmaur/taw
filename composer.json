@@ -1,18 +1,36 @@
 {
-    "name": "marcodelriego/taw-theme",
-    "autoload": {
-        "psr-4": {
-            "TAW\\": "inc/",
-            "TAW\\Blocks\\": "Blocks/"
-        }
-    },
+    "name": "taw/theme",
+    "description": "TAW Theme — Tailwind + Alpine + WordPress starter theme",
+    "type": "project",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
-            "name": "Relmaur",
+            "name": "Marco Del Riego",
             "email": "marck94zac1@gmail.com"
         }
     ],
     "require": {
-        "symfony/console": "^7.4"
+        "php": ">=8.1",
+        "taw/core": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TAW\\Blocks\\": "Blocks/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/marcodelriego/taw-core"
+        }
+    ],
+    "scripts": {
+        "post-create-project-cmd": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "npm install --silent"
+        ]
+    },
+    "config": {
+        "sort-packages": true
     }
 }
