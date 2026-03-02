@@ -58,6 +58,12 @@ php bin/taw make:block Hero --type=meta --with-style # Creates a MetaBlock
 
 php bin/taw make:block Button --type=ui --with-style --with-script # Creates a UI Block
 
+# Create a block inside a subgroup (optional) — great for organization and namespacing:
+
+php bin/taw make:block Hero --group=sections # Blocks/sections/Hero/
+
+php bin/taw make:block Badge --group=ui/cards # Blocks/ui/cards/Badge/
+
 # For more help with the CLI tool:
 php bin/taw make:block --help
 
